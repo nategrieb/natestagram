@@ -15,6 +15,7 @@ type PostPreviewCarouselProps = {
 export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionOverlay = false }: PostPreviewCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const currentAsset = assets[activeIndex] ?? assets[0];
+  const canOpenModal = assets.length > 1 && Boolean(onOpenModal);
 
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
@@ -22,7 +23,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
   };
 
   const openModal = () => {
-    if (assets.length > 1 && onOpenModal) {
+    if (canOpenModal && onOpenModal) {
       onOpenModal(activeIndex);
     }
   };
@@ -30,42 +31,72 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
   return (
     <div className="space-y-2">
       <div className="relative overflow-hidden">
-        <button
-          type="button"
-          onClick={openModal}
-          className="group relative block w-full overflow-hidden text-left transition-transform duration-150 active:scale-[0.992]"
-          aria-label="Open post"
-        >
-          <div
-            className="relative w-full"
-            style={{
-              aspectRatio:
-                currentAsset?.width && currentAsset?.height
-                  ? `${currentAsset.width}/${currentAsset.height}`
-                  : "4/5",
-            }}
+        {canOpenModal ? (
+          <button
+            type="button"
+            onClick={openModal}
+            className="group relative block w-full overflow-hidden text-left transition-transform duration-150 active:scale-[0.992]"
+            aria-label="Open post"
           >
-            {currentAsset ? (
-              <Image
-                src={currentAsset.imageUrl}
-                alt={caption || "Photo post"}
-                fill
-                priority={activeIndex === 0}
-                sizes="100vw"
-                className="object-contain"
-              />
+            <div
+              className="relative w-full"
+              style={{
+                aspectRatio:
+                  currentAsset?.width && currentAsset?.height
+                    ? `${currentAsset.width}/${currentAsset.height}`
+                    : "4/5",
+              }}
+            >
+              {currentAsset ? (
+                <Image
+                  src={currentAsset.imageUrl}
+                  alt={caption || "Photo post"}
+                  fill
+                  priority={activeIndex === 0}
+                  sizes="100vw"
+                  className="object-contain"
+                />
+              ) : null}
+            </div>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-white opacity-0 transition-opacity duration-150 group-active:opacity-[0.12]"
+            />
+            {showCaptionOverlay ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-3 text-white">
+                <p className="line-clamp-2 text-sm">{caption || "Untitled post"}</p>
+              </div>
+            ) : null}
+          </button>
+        ) : (
+          <div className="relative block w-full overflow-hidden">
+            <div
+              className="relative w-full"
+              style={{
+                aspectRatio:
+                  currentAsset?.width && currentAsset?.height
+                    ? `${currentAsset.width}/${currentAsset.height}`
+                    : "4/5",
+              }}
+            >
+              {currentAsset ? (
+                <Image
+                  src={currentAsset.imageUrl}
+                  alt={caption || "Photo post"}
+                  fill
+                  priority={activeIndex === 0}
+                  sizes="100vw"
+                  className="object-contain"
+                />
+              ) : null}
+            </div>
+            {showCaptionOverlay ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-3 text-white">
+                <p className="line-clamp-2 text-sm">{caption || "Untitled post"}</p>
+              </div>
             ) : null}
           </div>
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-white opacity-0 transition-opacity duration-150 group-active:opacity-[0.12]"
-          />
-          {showCaptionOverlay ? (
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-3 text-white">
-              <p className="line-clamp-2 text-sm">{caption || "Untitled post"}</p>
-            </div>
-          ) : null}
-        </button>
+        )}
 
         {assets.length > 1 ? (
           <>

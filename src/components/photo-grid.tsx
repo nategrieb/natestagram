@@ -2,9 +2,8 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import { PhotoCarousel } from "@/components/photo-carousel";
 import type { PhotoPost } from "@/types/photo";
 
 type PhotoGridProps = {
@@ -12,24 +11,16 @@ type PhotoGridProps = {
 };
 
 export function PhotoGrid({ posts }: PhotoGridProps) {
-  const [verticalCarouselIndex, setVerticalCarouselIndex] = useState<number | null>(null);
   const isTouchDevice = useMemo(() => {
     if (typeof window === 'undefined') return false;
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   }, []);
   const router = useRouter();
 
-  // Flatten all assets from all posts for vertical carousel
-  const allAssets = posts.flatMap(post => post.assets);
-  const allCaptions = posts.flatMap(post => post.assets.map(() => post.caption));
-
-  const handlePhotoClick = (post: PhotoPost, clickedAssetIndex: number) => {
+  const handlePhotoClick = (post: PhotoPost) => {
     if (isTouchDevice) {
-      // Mobile: open vertical carousel starting at clicked photo
-      const startIndex = posts
-        .slice(0, posts.findIndex(p => p.id === post.id))
-        .reduce((acc, p) => acc + p.assets.length, 0) + clickedAssetIndex;
-      setVerticalCarouselIndex(startIndex);
+      // Mobile: go to timeline feed focused on the selected post.
+      router.push(`/timeline?selected=${post.id}`);
     } else {
       // Desktop: navigate to individual photo page
       router.push(`/photo/${post.id}`);
@@ -43,7 +34,7 @@ export function PhotoGrid({ posts }: PhotoGridProps) {
           <button
             key={post.id}
             type="button"
-            onClick={() => handlePhotoClick(post, 0)}
+            onClick={() => handlePhotoClick(post)}
             className="photo-tile relative overflow-hidden"
             style={{ animationDelay: `${Math.min(index * 40, 500)}ms` }}
           >
@@ -62,27 +53,6 @@ export function PhotoGrid({ posts }: PhotoGridProps) {
           </button>
         ))}
       </section>
-
-      {verticalCarouselIndex !== null && isTouchDevice && (
-        <div className="fixed inset-0 z-50 bg-black">
-          <PhotoCarousel
-            assets={allAssets}
-            captions={allCaptions}
-            vertical={true}
-            initialIndex={verticalCarouselIndex}
-          />
-          <button
-            type="button"
-            onClick={() => setVerticalCarouselIndex(null)}
-            className="absolute left-4 top-4 z-10 rounded-full bg-black/50 p-2 text-white"
-            aria-label="Back to grid"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M3 3h7v7H3V3zM14 3h7v7h-7V3zM3 14h7v7H3v-7zM14 14h7v7h-7v-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
-      )}
     </>
   );
 }

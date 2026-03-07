@@ -54,6 +54,9 @@ export function AdminUploadForm() {
   const router = useRouter();
   const [clientError, setClientError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasDirectUploadEnv = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
 
   const helpText = useMemo(
     () =>
@@ -108,10 +111,27 @@ export function AdminUploadForm() {
         const takenAt = formData.get("takenAt");
         const sortOrder = formData.get("sortOrder");
         const isPublic = formData.get("isPublic");
-        const supabase = createSupabaseBrowserClient();
         setIsSubmitting(true);
 
         try {
+          if (!hasDirectUploadEnv) {
+            const legacyResponse = await fetch("/api/admin/upload", {
+              method: "POST",
+              body: formData,
+            });
+
+            if (!legacyResponse.ok) {
+              setClientError(await readErrorMessage(legacyResponse));
+              return;
+            }
+
+            router.replace("/admin?status=uploaded");
+            router.refresh();
+            return;
+          }
+
+          const supabase = createSupabaseBrowserClient();
+
           const initFormData = new FormData();
           initFormData.set("password", typeof password === "string" ? password : "");
           initFormData.set("caption", typeof caption === "string" ? caption : "");

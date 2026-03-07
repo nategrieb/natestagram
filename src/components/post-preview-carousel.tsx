@@ -27,6 +27,16 @@ export function PostPreviewCarousel({ assets, caption, href }: PostPreviewCarous
       return;
     }
 
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(
+        "natestagram:return-home",
+        JSON.stringify({
+          mode: "scroll",
+          y: window.scrollY,
+        })
+      );
+    }
+
     // Keep a short press-feedback frame before route transition.
     window.setTimeout(() => {
       router.push(href);
@@ -74,26 +84,36 @@ export function PostPreviewCarousel({ assets, caption, href }: PostPreviewCarous
               type="button"
               onClick={() => goToSlide(activeIndex - 1)}
               disabled={activeIndex === 0}
-              className="group absolute bottom-3 left-3 inline-flex h-10 w-10 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-900 active:scale-95 active:border-zinc-300/80 active:bg-white/90 disabled:cursor-not-allowed disabled:opacity-30"
+              className="group absolute inset-y-0 left-0 z-20 inline-flex w-[18%] max-w-[84px] items-center justify-start bg-gradient-to-r from-black/10 to-transparent pl-2 text-zinc-100 transition-all duration-200 active:bg-black/20 disabled:cursor-not-allowed disabled:opacity-35"
               aria-label="Previous photo"
             >
-              <span aria-hidden="true" className="text-xl leading-none">&larr;</span>
               <span
                 aria-hidden="true"
-                className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
+                className="inline-flex h-10 w-10 items-center justify-center border border-zinc-100/50 bg-zinc-900/35 text-xl leading-none"
+              >
+                &larr;
+              </span>
+              <span
+                aria-hidden="true"
+                className="absolute bottom-3 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-100/90 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
               />
             </button>
             <button
               type="button"
               onClick={() => goToSlide(activeIndex + 1)}
               disabled={activeIndex === assets.length - 1}
-              className="group absolute bottom-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-900 active:scale-95 active:border-zinc-300/80 active:bg-white/90 disabled:cursor-not-allowed disabled:opacity-30"
+              className="group absolute inset-y-0 right-0 z-20 inline-flex w-[18%] max-w-[84px] items-center justify-end bg-gradient-to-l from-black/10 to-transparent pr-2 text-zinc-100 transition-all duration-200 active:bg-black/20 disabled:cursor-not-allowed disabled:opacity-35"
               aria-label="Next photo"
             >
-              <span aria-hidden="true" className="text-xl leading-none">&rarr;</span>
               <span
                 aria-hidden="true"
-                className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
+                className="inline-flex h-10 w-10 items-center justify-center border border-zinc-100/50 bg-zinc-900/35 text-xl leading-none"
+              >
+                &rarr;
+              </span>
+              <span
+                aria-hidden="true"
+                className="absolute bottom-3 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-100/90 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
               />
             </button>
 

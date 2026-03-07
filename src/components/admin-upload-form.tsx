@@ -31,6 +31,23 @@ function isLikelyImage(file: File) {
   return IMAGE_EXTENSIONS.has(extension);
 }
 
+async function readErrorMessage(response: Response) {
+  if (response.status === 413) {
+    return "Upload payload is too large for the server. Try fewer photos or smaller files.";
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+    if (payload?.message) {
+      return payload.message;
+    }
+  }
+
+  const text = await response.text().catch(() => "");
+  return text || "Upload failed.";
+}
+
 export function AdminUploadForm() {
   const router = useRouter();
   const [clientError, setClientError] = useState<string | null>(null);
@@ -84,24 +101,77 @@ export function AdminUploadForm() {
         }
 
         const formData = new FormData(target);
+        const password = formData.get("password");
+        const caption = formData.get("caption");
+        const takenAt = formData.get("takenAt");
+        const sortOrder = formData.get("sortOrder");
+        const isPublic = formData.get("isPublic");
         setIsSubmitting(true);
 
         try {
-          const response = await fetch("/api/admin/upload", {
+          const initFormData = new FormData();
+          initFormData.set("password", typeof password === "string" ? password : "");
+          initFormData.set("caption", typeof caption === "string" ? caption : "");
+          initFormData.set("takenAt", typeof takenAt === "string" ? takenAt : "");
+          initFormData.set("sortOrder", typeof sortOrder === "string" ? sortOrder : "");
+          if (isPublic === "on") {
+            initFormData.set("isPublic", "on");
+          }
+
+          const initResponse = await fetch("/api/admin/upload?step=init", {
             method: "POST",
-            body: formData,
+            body: initFormData,
           });
 
-          const result = (await response.json()) as { ok?: boolean; message?: string };
-          if (!response.ok || !result.ok) {
-            setClientError(result.message || "Upload failed.");
+          if (!initResponse.ok) {
+            setClientError(await readErrorMessage(initResponse));
+            return;
+          }
+
+          const initResult = (await initResponse.json()) as { ok?: boolean; message?: string; postId?: string };
+          if (!initResult.ok || !initResult.postId) {
+            setClientError(initResult.message || "Failed to start upload.");
+            return;
+          }
+
+          const filesToUpload = Array.from(files);
+          for (let index = 0; index < filesToUpload.length; index += 1) {
+            const file = filesToUpload[index];
+            const assetFormData = new FormData();
+            assetFormData.set("password", typeof password === "string" ? password : "");
+            assetFormData.set("postId", initResult.postId);
+            assetFormData.set("position", String(index));
+            assetFormData.set("photo", file);
+
+            const assetResponse = await fetch("/api/admin/upload?step=asset", {
+              method: "POST",
+              body: assetFormData,
+            });
+
+            if (!assetResponse.ok) {
+              setClientError(await readErrorMessage(assetResponse));
+              return;
+            }
+          }
+
+          const completeFormData = new FormData();
+          completeFormData.set("password", typeof password === "string" ? password : "");
+          completeFormData.set("postId", initResult.postId);
+          const completeResponse = await fetch("/api/admin/upload?step=complete", {
+            method: "POST",
+            body: completeFormData,
+          });
+
+          if (!completeResponse.ok) {
+            setClientError(await readErrorMessage(completeResponse));
             return;
           }
 
           router.replace("/admin?status=uploaded");
           router.refresh();
-        } catch {
-          setClientError("Upload failed. Please check your connection and try again.");
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Upload failed. Please try again.";
+          setClientError(message);
         } finally {
           setIsSubmitting(false);
         }

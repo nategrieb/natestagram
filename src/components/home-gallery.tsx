@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { PostPreviewCarousel } from "@/components/post-preview-carousel";
 import type { PhotoPost } from "@/types/photo";
@@ -12,9 +12,53 @@ type HomeGalleryProps = {
 };
 
 export function HomeGallery({ posts }: HomeGalleryProps) {
-  const [mode, setMode] = useState<"grid" | "scroll">("scroll");
+  const [mode, setMode] = useState<"grid" | "scroll">(() => {
+    if (typeof window === "undefined") {
+      return "scroll";
+    }
+
+    const stored = sessionStorage.getItem("natestagram:return-home");
+    if (!stored) {
+      return "scroll";
+    }
+
+    try {
+      const parsed = JSON.parse(stored) as { mode?: "grid" | "scroll" };
+      if (parsed.mode === "grid" || parsed.mode === "scroll") {
+        return parsed.mode;
+      }
+    } catch {
+      // Ignore malformed persisted mode and use default.
+    }
+
+    return "scroll";
+  });
 
   const hasPosts = useMemo(() => posts.length > 0, [posts]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const stored = sessionStorage.getItem("natestagram:return-home");
+    if (!stored) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(stored) as { y?: number };
+
+      const targetY = typeof parsed.y === "number" ? parsed.y : 0;
+      requestAnimationFrame(() => {
+        window.scrollTo(0, Math.max(0, targetY));
+      });
+    } catch {
+      // Ignore malformed persisted position.
+    }
+
+    sessionStorage.removeItem("natestagram:return-home");
+  }, []);
 
   if (!hasPosts) {
     return (

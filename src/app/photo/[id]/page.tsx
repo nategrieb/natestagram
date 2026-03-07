@@ -22,7 +22,7 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
   const nextPost = posts[currentIndex + 1] ?? null;
 
   return (
-    <main className="relative flex min-h-screen flex-col overflow-hidden">
+    <main className="relative flex min-h-screen flex-col overflow-x-hidden">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-5 sm:px-8">
         <Link
           href="/"
@@ -76,7 +76,7 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
         </div>
       </div>
 
-      <section className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-5 px-4 pb-8 sm:px-8 lg:grid-cols-[2fr_1fr]">
+      <section className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-5 px-4 pb-16 sm:px-8 lg:grid-cols-[2fr_1fr] lg:pb-8">
         <PhotoCarousel assets={currentPost.assets} caption={currentPost.caption} />
 
         <article className="p-6 sm:p-8">
@@ -92,36 +92,38 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
         </article>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200/70 bg-white/90 px-4 py-3 backdrop-blur md:hidden">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-center gap-5">
-          {previousPost ? (
-            <Link
-              href={`/photo/${previousPost.id}`}
-              className="group relative inline-flex h-12 w-12 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 active:scale-95 active:border-zinc-300/80 active:bg-white active:text-zinc-900"
-              aria-label="Previous post"
-            >
-              <span aria-hidden="true" className="text-2xl leading-none">&larr;</span>
-              <span
-                aria-hidden="true"
-                className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
-              />
-            </Link>
-          ) : null}
-          {nextPost ? (
-            <Link
-              href={`/photo/${nextPost.id}`}
-              className="group relative inline-flex h-12 w-12 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 active:scale-95 active:border-zinc-300/80 active:bg-white active:text-zinc-900"
-              aria-label="Next post"
-            >
-              <span aria-hidden="true" className="text-2xl leading-none">&rarr;</span>
-              <span
-                aria-hidden="true"
-                className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
-              />
-            </Link>
-          ) : null}
+      {previousPost || nextPost ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200/70 bg-white/90 px-4 py-3 backdrop-blur md:hidden">
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-center gap-5">
+            {previousPost ? (
+              <Link
+                href={`/photo/${previousPost.id}`}
+                className="group relative inline-flex h-12 w-12 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 active:scale-95 active:border-zinc-300/80 active:bg-white active:text-zinc-900"
+                aria-label="Previous post"
+              >
+                <span aria-hidden="true" className="text-2xl leading-none">&larr;</span>
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
+                />
+              </Link>
+            ) : null}
+            {nextPost ? (
+              <Link
+                href={`/photo/${nextPost.id}`}
+                className="group relative inline-flex h-12 w-12 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 active:scale-95 active:border-zinc-300/80 active:bg-white active:text-zinc-900"
+                aria-label="Next post"
+              >
+                <span aria-hidden="true" className="text-2xl leading-none">&rarr;</span>
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
+                />
+              </Link>
+            ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
     </main>
   );
 }

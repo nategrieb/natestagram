@@ -35,21 +35,130 @@ function jsonError(message: string, status = 400) {
   return NextResponse.json({ ok: false, message }, { status });
 }
 
+function validatePassword(formData: FormData) {
+  const password = formData.get("password");
+  const expectedPassword = process.env.ADMIN_UPLOAD_PASSWORD;
+
+  if (!expectedPassword) {
+    return { ok: false as const, response: jsonError("ADMIN_UPLOAD_PASSWORD is missing in environment variables.", 500) };
+  }
+
+  if (typeof password !== "string" || password !== expectedPassword) {
+    return { ok: false as const, response: jsonError("Incorrect admin password.", 401) };
+  }
+
+  return { ok: true as const };
+}
+
 export async function POST(request: Request) {
   try {
+    const step = new URL(request.url).searchParams.get("step") ?? "legacy";
     const formData = await request.formData();
 
-    const password = formData.get("password");
-    const expectedPassword = process.env.ADMIN_UPLOAD_PASSWORD;
-
-    if (!expectedPassword) {
-      return jsonError("ADMIN_UPLOAD_PASSWORD is missing in environment variables.", 500);
+    const passwordValidation = validatePassword(formData);
+    if (!passwordValidation.ok) {
+      return passwordValidation.response;
     }
 
-    if (typeof password !== "string" || password !== expectedPassword) {
-      return jsonError("Incorrect admin password.", 401);
+    const caption = formData.get("caption");
+    const takenAt = formData.get("takenAt");
+    const isPublic = formData.get("isPublic") === "on";
+    const sortOrderRaw = formData.get("sortOrder");
+
+    const bucket = process.env.SUPABASE_STORAGE_BUCKET || "photos";
+
+    const supabase = createSupabaseAdminClient();
+
+    if (step === "init") {
+      const sortOrder =
+        typeof sortOrderRaw === "string" && sortOrderRaw.trim().length > 0
+          ? Number(sortOrderRaw)
+          : null;
+
+      const { data: postData, error: postInsertError } = await supabase
+        .from("posts")
+        .insert({
+          caption: typeof caption === "string" ? caption.trim() : null,
+          taken_at: typeof takenAt === "string" && takenAt ? takenAt : null,
+          is_public: isPublic,
+          sort_order: Number.isFinite(sortOrder) ? sortOrder : null,
+        })
+        .select("id")
+        .single();
+
+      if (postInsertError || !postData) {
+        return jsonError(postInsertError?.message || "Failed to create post.", 500);
+      }
+
+      return NextResponse.json({ ok: true, postId: postData.id });
     }
 
+    if (step === "asset") {
+      const postId = formData.get("postId");
+      const positionRaw = formData.get("position");
+      const photo = formData.get("photo");
+
+      if (typeof postId !== "string" || postId.length === 0) {
+        return jsonError("Missing post identifier.");
+      }
+
+      const position = typeof positionRaw === "string" ? Number(positionRaw) : Number.NaN;
+      if (!Number.isFinite(position) || position < 0) {
+        return jsonError("Missing photo position.");
+      }
+
+      if (!(photo instanceof File) || photo.size <= 0) {
+        return jsonError("Missing photo file.");
+      }
+
+      if (!isLikelyImage(photo)) {
+        return jsonError(`Unsupported file type for ${photo.name}.`);
+      }
+
+      if (photo.size > MAX_SINGLE_FILE_BYTES) {
+        return jsonError(`${photo.name} is too large. Keep each photo under 18MB.`);
+      }
+
+      const extension = getFileExtension(photo.name) || "jpg";
+      const sanitizedName = photo.name.toLowerCase().replace(/[^a-z0-9.-]+/g, "-");
+      const storagePath = `${postId}/${position}-${Date.now()}-${sanitizedName.replace(/\.+/g, ".")}`;
+      const fileBuffer = await photo.arrayBuffer();
+
+      const { error: uploadError } = await supabase.storage.from(bucket).upload(storagePath, fileBuffer, {
+        contentType: photo.type || `image/${extension}`,
+        upsert: false,
+      });
+
+      if (uploadError) {
+        return jsonError(uploadError.message, 500);
+      }
+
+      const { error: insertError } = await supabase.from("post_assets").insert({
+        post_id: postId,
+        storage_path: storagePath,
+        position,
+      });
+
+      if (insertError) {
+        return jsonError(insertError.message, 500);
+      }
+
+      return NextResponse.json({ ok: true });
+    }
+
+    if (step === "complete") {
+      const postId = formData.get("postId");
+      if (typeof postId !== "string" || postId.length === 0) {
+        return jsonError("Missing post identifier.");
+      }
+
+      revalidatePath("/");
+      revalidatePath(`/photo/${postId}`);
+
+      return NextResponse.json({ ok: true });
+    }
+
+    // Backward-compatible legacy path (single request containing all files).
     const fileEntries = formData
       .getAll("photos")
       .filter((entry): entry is File => entry instanceof File && entry.size > 0);
@@ -72,15 +181,6 @@ export async function POST(request: Request) {
         return jsonError(`${file.name} is too large. Keep each photo under 18MB.`);
       }
     }
-
-    const caption = formData.get("caption");
-    const takenAt = formData.get("takenAt");
-    const isPublic = formData.get("isPublic") === "on";
-    const sortOrderRaw = formData.get("sortOrder");
-
-    const bucket = process.env.SUPABASE_STORAGE_BUCKET || "photos";
-
-    const supabase = createSupabaseAdminClient();
 
     const sortOrder =
       typeof sortOrderRaw === "string" && sortOrderRaw.trim().length > 0

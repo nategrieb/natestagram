@@ -26,7 +26,7 @@ export function HomeGallery({ posts, selectedId }: HomeGalleryProps) {
   const lastScrollTimeRef = useRef(0);
   const lastVelocityRef = useRef(0);
 
-  const [modalPost, setModalPost] = useState<PhotoPost | null>(null);
+  const [modalState, setModalState] = useState<{ post: PhotoPost; initialIndex: number } | null>(null);
 
   const hasPosts = useMemo(() => posts.length > 0, [posts]);
 
@@ -184,7 +184,7 @@ export function HomeGallery({ posts, selectedId }: HomeGalleryProps) {
             <PostPreviewCarousel
               assets={post.assets}
               caption={post.caption}
-              onOpenModal={() => setModalPost(post)}
+              onOpenModal={(initialIndex) => setModalState({ post, initialIndex })}
             />
             <div className="mt-2 px-1">
               <p className="line-clamp-1 text-sm text-zinc-500">{post.caption || "Untitled post"}</p>
@@ -193,16 +193,17 @@ export function HomeGallery({ posts, selectedId }: HomeGalleryProps) {
         ))}
       </section>
 
-      {modalPost && (
+      {modalState && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75">
           <div className="relative max-h-full max-w-full">
             <PhotoCarousel
-              assets={modalPost.assets}
-              caption={modalPost.caption}
+              assets={modalState.post.assets}
+              caption={modalState.post.caption}
+              initialIndex={modalState.initialIndex}
             />
             <button
               type="button"
-              onClick={() => setModalPost(null)}
+              onClick={() => setModalState(null)}
               className="absolute right-4 top-4 z-10 rounded-full bg-black/50 p-2 text-white"
               aria-label="Close modal"
             >

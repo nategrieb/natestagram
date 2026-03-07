@@ -8,7 +8,7 @@ import type { PostAsset } from "@/types/photo";
 type PostPreviewCarouselProps = {
   assets: PostAsset[];
   caption: string | null;
-  onOpenModal?: () => void;
+  onOpenModal?: (initialIndex: number) => void;
 };
 
 export function PostPreviewCarousel({ assets, caption, onOpenModal }: PostPreviewCarouselProps) {
@@ -22,7 +22,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal }: PostPrevie
 
   const openModal = () => {
     if (assets.length > 1 && onOpenModal) {
-      onOpenModal();
+      onOpenModal(activeIndex);
     }
   };
 

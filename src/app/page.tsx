@@ -21,7 +21,10 @@ async function Gallery({
       <div className="backdrop-orb hidden sm:block" aria-hidden="true" />
       <main className="mx-auto flex w-full max-w-7xl flex-col px-5 pt-10 sm:px-8 lg:px-14">
         <header className="mb-8 flex items-center justify-between gap-6 sm:mb-10">
-          <h1 className="bg-none text-2xl font-medium tracking-tight text-zinc-500 sm:text-3xl">Natestagram</h1>
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-6 rounded-full bg-gradient-to-br from-green-800 to-green-600" aria-hidden="true" />
+            <h1 className="bg-none text-2xl font-medium tracking-tight text-zinc-500 sm:text-3xl">Natestagram</h1>
+          </div>
           <Link
             className="group relative inline-flex h-10 w-10 items-center justify-center rounded-none border border-transparent text-zinc-400 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-800 focus-visible:border-zinc-300/80 focus-visible:bg-white/70 focus-visible:text-zinc-800 active:scale-95"
             href="/admin"

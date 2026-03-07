@@ -3,6 +3,7 @@
         "npm install": true,
         "lsof": true,
         "git add": true,
-        "pkill": true
+        "pkill": true,
+        "git push": true
     }
 }

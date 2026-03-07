@@ -218,7 +218,11 @@ export function PhotoCarousel({ assets, caption, captions, fullScreen = true, ve
     <div className={`relative overflow-hidden bg-transparent ${fullScreen ? 'h-screen w-screen' : 'w-full'}`}>
       <div
         ref={trackRef}
-        className={`carousel-track flex ${vertical ? 'flex-col' : ''} snap-${vertical ? 'y' : 'x'} snap-mandatory overflow-${vertical ? 'y' : 'x'}-auto ${vertical ? '' : 'overflow-y-hidden'} scroll-smooth ${fullScreen ? 'h-full' : 'h-[60vh]'}`}
+        className={`carousel-track flex scroll-smooth ${fullScreen ? 'h-full' : 'h-[60vh]'} ${
+          vertical
+            ? 'flex-col snap-y snap-mandatory overflow-y-auto overflow-x-hidden'
+            : 'snap-x snap-mandatory overflow-x-auto overflow-y-hidden'
+        }`}
         aria-label="Photo carousel"
         onScroll={updateIndexFromScroll}
         onTouchStart={handleTouchStart}

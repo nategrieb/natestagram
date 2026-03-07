@@ -20,12 +20,8 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
 
   const label = useMemo(() => caption || "Photo post", [caption]);
 
-  const getSlideHeight = (asset: PostAsset) => {
-    if (asset.width && asset.height) {
-      return asset.height > asset.width ? "80vh" : "68vh";
-    }
-
-    return "72vh";
+  const getSlideHeight = (_asset: PostAsset) => {
+    return "100vh";
   };
 
   const scrollToIndex = (index: number, behavior: ScrollBehavior = "smooth") => {
@@ -47,7 +43,7 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
     scrollToIndex(safeIndex);
   };
 
-  const settleToNearestSlide = (behavior: ScrollBehavior = "smooth") => {
+  const settleToNearestSlide = (behavior: ScrollBehavior = "auto") => {
     const track = trackRef.current;
     if (!track) {
       return;
@@ -90,7 +86,7 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
 
     // Adds a gentle "gravity" settle after momentum slows down.
     settleTimerRef.current = setTimeout(() => {
-      settleToNearestSlide("smooth");
+      settleToNearestSlide("auto");
     }, 90);
   };
 

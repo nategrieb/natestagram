@@ -98,21 +98,27 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
               type="button"
               onClick={() => goToSlide(activeIndex - 1)}
               disabled={activeIndex === 0}
-              className="absolute left-3 top-1/2 hidden -translate-y-1/2 items-center gap-1.5 rounded-full border border-zinc-200/0 bg-white/0 px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-zinc-500/0 opacity-0 transition-all duration-200 group-hover:text-zinc-500/95 group-hover:opacity-100 hover:border-zinc-300/80 hover:bg-white/75 hover:text-zinc-700 disabled:opacity-0 md:inline-flex"
+              className="group absolute left-3 top-1/2 hidden -translate-y-1/2 items-center rounded-none border border-transparent px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-zinc-600 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-30 md:inline-flex"
               aria-label="Previous photo"
             >
-              <span aria-hidden="true">&larr;</span>
               <span>PREV</span>
+              <span
+                aria-hidden="true"
+                className="absolute bottom-1.5 left-3 right-3 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100"
+              />
             </button>
             <button
               type="button"
               onClick={() => goToSlide(activeIndex + 1)}
               disabled={activeIndex === assets.length - 1}
-              className="absolute right-3 top-1/2 hidden -translate-y-1/2 items-center gap-1.5 rounded-full border border-zinc-200/0 bg-white/0 px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-zinc-500/0 opacity-0 transition-all duration-200 group-hover:text-zinc-500/95 group-hover:opacity-100 hover:border-zinc-300/80 hover:bg-white/75 hover:text-zinc-700 disabled:opacity-0 md:inline-flex"
+              className="group absolute right-3 top-1/2 hidden -translate-y-1/2 items-center rounded-none border border-transparent px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-zinc-600 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-30 md:inline-flex"
               aria-label="Next photo"
             >
               <span>NEXT</span>
-              <span aria-hidden="true">&rarr;</span>
+              <span
+                aria-hidden="true"
+                className="absolute bottom-1.5 left-3 right-3 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100"
+              />
             </button>
           </>
         ) : null}

@@ -26,25 +26,39 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-5 sm:px-8">
         <Link
           href="/"
-          className="text-sm text-zinc-500/90 transition hover:text-zinc-700"
+          className="group relative inline-flex items-center rounded-none border border-transparent px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-zinc-600 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-800 focus-visible:border-zinc-300/80 focus-visible:bg-white/70 focus-visible:text-zinc-800"
         >
-          Back
+          <span>BACK</span>
+          <span
+            aria-hidden="true"
+            className="absolute bottom-1.5 left-3 right-3 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100"
+          />
         </Link>
         <div className="flex gap-2 text-sm">
           {previousPost ? (
             <Link
               href={`/photo/${previousPost.id}`}
-              className="text-zinc-500/90 transition hover:text-zinc-700"
+              className="group relative inline-flex items-center rounded-none border border-transparent px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-zinc-600 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-800 focus-visible:border-zinc-300/80 focus-visible:bg-white/70 focus-visible:text-zinc-800"
+              aria-label="Previous post"
             >
-              Previous
+              <span>PREV</span>
+              <span
+                aria-hidden="true"
+                className="absolute bottom-1.5 left-3 right-3 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100"
+              />
             </Link>
           ) : null}
           {nextPost ? (
             <Link
               href={`/photo/${nextPost.id}`}
-              className="text-zinc-500/90 transition hover:text-zinc-700"
+              className="group relative inline-flex items-center rounded-none border border-transparent px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-zinc-600 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-800 focus-visible:border-zinc-300/80 focus-visible:bg-white/70 focus-visible:text-zinc-800"
+              aria-label="Next post"
             >
-              Next
+              <span>NEXT</span>
+              <span
+                aria-hidden="true"
+                className="absolute bottom-1.5 left-3 right-3 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100"
+              />
             </Link>
           ) : null}
         </div>

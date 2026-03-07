@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 
 import { createSupabaseAdminClient } from "@/lib/supabase";
 
+const MAX_SINGLE_FILE_BYTES = 18 * 1024 * 1024;
+const MAX_TOTAL_UPLOAD_BYTES = 24 * 1024 * 1024;
+
 function redirectWithError(message: string): never {
   redirect(`/admin?status=error&message=${encodeURIComponent(message)}`);
 }
@@ -27,6 +30,21 @@ export async function uploadPhoto(formData: FormData) {
 
   if (fileEntries.length === 0) {
     redirectWithError("Please choose one or more image files.");
+  }
+
+  const totalBytes = fileEntries.reduce((sum, file) => sum + file.size, 0);
+  if (totalBytes > MAX_TOTAL_UPLOAD_BYTES) {
+    redirectWithError("Total upload is too large. Please upload fewer or smaller photos.");
+  }
+
+  for (const file of fileEntries) {
+    if (!file.type.startsWith("image/")) {
+      redirectWithError(`Unsupported file type for ${file.name}.`);
+    }
+
+    if (file.size > MAX_SINGLE_FILE_BYTES) {
+      redirectWithError(`${file.name} is too large. Keep each photo under 18MB.`);
+    }
   }
 
   const caption = formData.get("caption");

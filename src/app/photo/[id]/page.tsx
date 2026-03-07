@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { PhotoGrid } from "@/components/photo-grid";
+import { SiteLogoLink } from "@/components/site-logo-link";
 import { getPublicPosts } from "@/lib/photos";
 
 type PhotoPageProps = {
@@ -28,21 +29,7 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
   return (
     <main className="relative flex min-h-screen flex-col overflow-x-hidden">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-5 sm:px-8">
-        <Link
-          href="/"
-          className="group relative inline-flex h-10 w-10 items-center justify-center rounded-none border border-transparent text-zinc-600 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-800 focus-visible:border-zinc-300/80 focus-visible:bg-white/70 focus-visible:text-zinc-800 active:scale-95"
-          aria-label="Go to gallery"
-        >
-          <img
-            src="/square-4-grid.svg"
-            alt=""
-            className="h-4 w-4"
-          />
-          <span
-            aria-hidden="true"
-            className="absolute bottom-1.5 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100 group-active:scale-x-100"
-          />
-        </Link>
+        <SiteLogoLink />
         <div className="hidden gap-2 text-sm md:flex">
           {previousPost ? (
             <Link
@@ -81,12 +68,6 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
             {/* Caption Section */}
             {currentPost.caption ? (
               <div className="space-y-3 md:space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-6 w-6 md:h-8 md:w-8 rounded-full bg-gradient-to-br from-green-800 to-green-600"></div>
-                  <div className="font-bold text-sm md:text-base text-zinc-900 tracking-wider">
-                    NATESTAGRAM
-                  </div>
-                </div>
                 <p className="whitespace-pre-wrap text-sm md:text-base leading-relaxed text-zinc-800">
                   {currentPost.caption}
                 </p>

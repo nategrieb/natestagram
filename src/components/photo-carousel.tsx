@@ -244,7 +244,7 @@ export function PhotoCarousel({ assets, caption, captions, fullScreen = true, ve
             type="button"
             onClick={() => goToSlide(activeIndex - 1)}
             disabled={activeIndex === 0}
-            className={`group absolute z-20 inline-flex h-11 w-11 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-900 active:scale-95 active:border-zinc-300 active:bg-white disabled:cursor-not-allowed disabled:opacity-30 ${
+            className={`group absolute z-20 inline-flex h-11 w-11 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 hover:bg-white hover:text-zinc-900 active:scale-95 active:bg-white disabled:cursor-not-allowed disabled:opacity-30 ${
               vertical ? 'top-4 left-1/2 -translate-x-1/2' : 'left-4 top-1/2 -translate-y-1/2'
             }`}
             aria-label="Previous photo"
@@ -260,7 +260,7 @@ export function PhotoCarousel({ assets, caption, captions, fullScreen = true, ve
             type="button"
             onClick={() => goToSlide(activeIndex + 1)}
             disabled={activeIndex === assets.length - 1}
-            className={`group absolute z-20 inline-flex h-11 w-11 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 hover:border-zinc-300 hover:bg-white hover:text-zinc-900 active:scale-95 active:border-zinc-300 active:bg-white disabled:cursor-not-allowed disabled:opacity-30 ${
+            className={`group absolute z-20 inline-flex h-11 w-11 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 hover:bg-white hover:text-zinc-900 active:scale-95 active:bg-white disabled:cursor-not-allowed disabled:opacity-30 ${
               vertical ? 'bottom-4 left-1/2 -translate-x-1/2' : 'right-4 top-1/2 -translate-y-1/2'
             }`}
             aria-label="Next photo"

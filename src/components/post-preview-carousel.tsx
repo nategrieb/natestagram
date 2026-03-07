@@ -9,9 +9,10 @@ type PostPreviewCarouselProps = {
   assets: PostAsset[];
   caption: string | null;
   onOpenModal?: (initialIndex: number) => void;
+  showCaptionOverlay?: boolean;
 };
 
-export function PostPreviewCarousel({ assets, caption, onOpenModal }: PostPreviewCarouselProps) {
+export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionOverlay = false }: PostPreviewCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const currentAsset = assets[activeIndex] ?? assets[0];
 
@@ -59,6 +60,11 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal }: PostPrevie
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 bg-white opacity-0 transition-opacity duration-150 group-active:opacity-[0.12]"
           />
+          {showCaptionOverlay ? (
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-3 text-white">
+              <p className="line-clamp-2 text-sm">{caption || "Untitled post"}</p>
+            </div>
+          ) : null}
         </button>
 
         {assets.length > 1 ? (

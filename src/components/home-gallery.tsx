@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 
 import { PostPreviewCarousel } from "@/components/post-preview-carousel";
@@ -11,6 +12,7 @@ type HomeGalleryProps = {
 };
 
 export function HomeGallery({ posts, selectedId }: HomeGalleryProps) {
+  const router = useRouter();
   const mobileItemRefs = useRef<Array<HTMLElement | null>>([]);
 
   const hasPosts = useMemo(() => posts.length > 0, [posts]);
@@ -63,10 +65,10 @@ export function HomeGallery({ posts, selectedId }: HomeGalleryProps) {
             <PostPreviewCarousel
               assets={post.assets}
               caption={post.caption}
-              showCaptionOverlay={true}
+              onOpenModal={() => router.push(`/photo/${post.id}`)}
             />
-            <div className="mt-2 px-1 hidden md:block">
-              <p className="line-clamp-1 text-sm text-zinc-500">{post.caption || "Untitled post"}</p>
+            <div className="mt-2 px-1">
+              <p className="line-clamp-2 text-sm text-zinc-500">{post.caption || "Untitled post"}</p>
             </div>
           </article>
         ))}

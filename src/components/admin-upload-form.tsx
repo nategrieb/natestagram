@@ -3,8 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import { createSupabaseBrowserClient } from "@/lib/supabase";
-
 const MAX_SINGLE_FILE_MB = 18;
 const MAX_TOTAL_UPLOAD_MB = 24;
 const IMAGE_EXTENSIONS = new Set([
@@ -54,9 +52,6 @@ export function AdminUploadForm() {
   const router = useRouter();
   const [clientError, setClientError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const hasDirectUploadEnv = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
 
   const helpText = useMemo(
     () =>
@@ -106,131 +101,16 @@ export function AdminUploadForm() {
         }
 
         const formData = new FormData(target);
-        const password = formData.get("password");
-        const caption = formData.get("caption");
-        const takenAt = formData.get("takenAt");
-        const sortOrder = formData.get("sortOrder");
-        const isPublic = formData.get("isPublic");
         setIsSubmitting(true);
 
         try {
-          if (!hasDirectUploadEnv) {
-            const legacyResponse = await fetch("/api/admin/upload", {
-              method: "POST",
-              body: formData,
-            });
-
-            if (!legacyResponse.ok) {
-              setClientError(await readErrorMessage(legacyResponse));
-              return;
-            }
-
-            router.replace("/admin?status=uploaded");
-            router.refresh();
-            return;
-          }
-
-          const supabase = createSupabaseBrowserClient();
-
-          const initFormData = new FormData();
-          initFormData.set("password", typeof password === "string" ? password : "");
-          initFormData.set("caption", typeof caption === "string" ? caption : "");
-          initFormData.set("takenAt", typeof takenAt === "string" ? takenAt : "");
-          initFormData.set("sortOrder", typeof sortOrder === "string" ? sortOrder : "");
-          if (isPublic === "on") {
-            initFormData.set("isPublic", "on");
-          }
-
-          const initResponse = await fetch("/api/admin/upload?step=init", {
+          const uploadResponse = await fetch("/api/admin/upload", {
             method: "POST",
-            body: initFormData,
+            body: formData,
           });
 
-          if (!initResponse.ok) {
-            setClientError(await readErrorMessage(initResponse));
-            return;
-          }
-
-          const initResult = (await initResponse.json()) as { ok?: boolean; message?: string; postId?: string };
-          if (!initResult.ok || !initResult.postId) {
-            setClientError(initResult.message || "Failed to start upload.");
-            return;
-          }
-
-          const filesToUpload = Array.from(files);
-          for (let index = 0; index < filesToUpload.length; index += 1) {
-            const file = filesToUpload[index];
-            const prepareAssetFormData = new FormData();
-            prepareAssetFormData.set("password", typeof password === "string" ? password : "");
-            prepareAssetFormData.set("postId", initResult.postId);
-            prepareAssetFormData.set("position", String(index));
-            prepareAssetFormData.set("fileName", file.name);
-            prepareAssetFormData.set("fileType", file.type || "");
-            prepareAssetFormData.set("fileSize", String(file.size));
-
-            const prepareAssetResponse = await fetch("/api/admin/upload?step=prepare-asset", {
-              method: "POST",
-              body: prepareAssetFormData,
-            });
-
-            if (!prepareAssetResponse.ok) {
-              setClientError(await readErrorMessage(prepareAssetResponse));
-              return;
-            }
-
-            const prepareResult = (await prepareAssetResponse.json()) as {
-              ok?: boolean;
-              message?: string;
-              bucket?: string;
-              path?: string;
-              token?: string;
-              contentType?: string;
-            };
-
-            if (!prepareResult.ok || !prepareResult.bucket || !prepareResult.path || !prepareResult.token) {
-              setClientError(prepareResult.message || "Failed to prepare photo upload.");
-              return;
-            }
-
-            const directUpload = await supabase.storage
-              .from(prepareResult.bucket)
-              .uploadToSignedUrl(prepareResult.path, prepareResult.token, file, {
-                contentType: prepareResult.contentType || file.type || "image/jpeg",
-                upsert: false,
-              });
-
-            if (directUpload.error) {
-              setClientError(directUpload.error.message || "Failed to upload photo to storage.");
-              return;
-            }
-
-            const registerAssetFormData = new FormData();
-            registerAssetFormData.set("password", typeof password === "string" ? password : "");
-            registerAssetFormData.set("postId", initResult.postId);
-            registerAssetFormData.set("position", String(index));
-            registerAssetFormData.set("storagePath", prepareResult.path);
-
-            const registerAssetResponse = await fetch("/api/admin/upload?step=register-asset", {
-              method: "POST",
-              body: registerAssetFormData,
-            });
-
-            if (!registerAssetResponse.ok) {
-              setClientError(await readErrorMessage(registerAssetResponse));
-              return;
-            }
-          }
-
-          const completeFormData = new FormData();
-          completeFormData.set("password", typeof password === "string" ? password : "");
-          completeFormData.set("postId", initResult.postId);
-          const completeResponse = await fetch("/api/admin/upload?step=complete", {
-            method: "POST",
-            body: completeFormData,
-          });
-
-          if (!completeResponse.ok) {
-            setClientError(await readErrorMessage(completeResponse));
+          if (!uploadResponse.ok) {
+            setClientError(await readErrorMessage(uploadResponse));
             return;
           }
 

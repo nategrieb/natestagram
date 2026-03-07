@@ -15,7 +15,7 @@ type PostPreviewCarouselProps = {
 export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionOverlay = false }: PostPreviewCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const currentAsset = assets[activeIndex] ?? assets[0];
-  const canOpenModal = assets.length > 1 && Boolean(onOpenModal);
+  const canOpenModal = Boolean(onOpenModal);
 
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
@@ -36,7 +36,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
             type="button"
             onClick={openModal}
             className="group relative block w-full overflow-hidden text-left transition-transform duration-150 active:scale-[0.992]"
-            aria-label="Open post"
+            aria-label="Open post details"
           >
             <div
               className="relative w-full"

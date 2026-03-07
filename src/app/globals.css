@@ -4,6 +4,7 @@
   --paper: #f1f5f9;
   --ink: #121316;
   --mist: #ffffff;
+  --cursor-interactive: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext x='2' y='24' font-size='24'%3E%F0%9F%A4%98%3C/text%3E%3C/svg%3E") 4 4, pointer;
 }
 
 @theme inline {
@@ -81,6 +82,31 @@ body {
 .mobile-feed-item {
   scroll-snap-align: start;
   scroll-snap-stop: always;
+}
+
+/* Show a clear response over selectable/clickable elements. */
+a[href],
+button:not(:disabled),
+[role="button"],
+summary,
+input[type="checkbox"],
+input[type="radio"],
+.photo-tile {
+  cursor: var(--cursor-interactive);
+}
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="date"],
+textarea {
+  cursor: text;
 }
 
 h1,

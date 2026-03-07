@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Natestagram
 
-## Getting Started
+A personal Instagram alternative focused on your photos only: no likes, no comments, no social chrome.
 
-First, run the development server:
+## Stack
+
+- Next.js (App Router, TypeScript)
+- Supabase Postgres + Storage
+- Vercel deployment
+
+## Features
+
+- Responsive photo grid homepage
+- Fullscreen post route with swipeable photo carousel and full caption display
+- Admin upload page with password gate and multi-photo post upload
+- Supabase-backed storage and metadata
+
+## Local setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create environment variables:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Fill `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+SUPABASE_STORAGE_BUCKET=photos
+ADMIN_UPLOAD_PASSWORD=choose-a-strong-password
+```
+
+4. In Supabase SQL editor, run `supabase/schema.sql`.
+
+5. Create a public storage bucket named `photos` (or set `SUPABASE_STORAGE_BUCKET` to your bucket name).
+
+6. Start development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+7. Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Routes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/` photo grid
+- `/photo/[id]` fullscreen post carousel + caption
+- `/admin` upload form
 
-## Learn More
+## Deploy to Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Push this repo to GitHub.
+2. Import project in Vercel.
+3. Add all env vars from `.env.example` in Vercel Project Settings.
+4. Attach your custom domain in Vercel.
+5. Deploy.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Home page gracefully shows an empty state if Supabase env vars are not set.
+- Service role key is used only in server actions for admin uploads.

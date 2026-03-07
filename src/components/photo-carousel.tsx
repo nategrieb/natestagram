@@ -98,26 +98,26 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
               type="button"
               onClick={() => goToSlide(activeIndex - 1)}
               disabled={activeIndex === 0}
-              className="group absolute left-3 top-1/2 hidden -translate-y-1/2 items-center rounded-none border border-transparent px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-zinc-600 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-30 md:inline-flex"
+              className="group absolute bottom-4 left-3 inline-flex h-11 w-11 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-900 active:scale-95 active:border-zinc-300/80 active:bg-white/90 disabled:cursor-not-allowed disabled:opacity-30 md:bottom-auto md:top-1/2 md:h-10 md:w-10 md:-translate-y-1/2"
               aria-label="Previous photo"
             >
-              <span>PREV</span>
+              <span aria-hidden="true" className="text-xl leading-none">&larr;</span>
               <span
                 aria-hidden="true"
-                className="absolute bottom-1.5 left-3 right-3 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100"
+                className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
               />
             </button>
             <button
               type="button"
               onClick={() => goToSlide(activeIndex + 1)}
               disabled={activeIndex === assets.length - 1}
-              className="group absolute right-3 top-1/2 hidden -translate-y-1/2 items-center rounded-none border border-transparent px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-zinc-600 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-30 md:inline-flex"
+              className="group absolute bottom-4 right-3 inline-flex h-11 w-11 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-900 active:scale-95 active:border-zinc-300/80 active:bg-white/90 disabled:cursor-not-allowed disabled:opacity-30 md:bottom-auto md:top-1/2 md:h-10 md:w-10 md:-translate-y-1/2"
               aria-label="Next photo"
             >
-              <span>NEXT</span>
+              <span aria-hidden="true" className="text-xl leading-none">&rarr;</span>
               <span
                 aria-hidden="true"
-                className="absolute bottom-1.5 left-3 right-3 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100"
+                className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
               />
             </button>
           </>

@@ -18,6 +18,7 @@ const TAP_DISTANCE_THRESHOLD = 10;
 export function PostPreviewCarousel({ assets, caption, href }: PostPreviewCarouselProps) {
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isPressed, setIsPressed] = useState(false);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -39,10 +40,12 @@ export function PostPreviewCarousel({ assets, caption, href }: PostPreviewCarous
   const onTouchStart: React.TouchEventHandler<HTMLDivElement> = (event) => {
     const touch = event.touches[0];
     touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    setIsPressed(true);
   };
 
   const onTouchEnd: React.TouchEventHandler<HTMLDivElement> = (event) => {
     if (!href || !touchStartRef.current) {
+      setIsPressed(false);
       return;
     }
 
@@ -53,40 +56,73 @@ export function PostPreviewCarousel({ assets, caption, href }: PostPreviewCarous
 
     const isTap = deltaX < TAP_DISTANCE_THRESHOLD && deltaY < TAP_DISTANCE_THRESHOLD;
     if (isTap) {
-      router.push(href);
+      // Keep a short press-feedback frame before route transition.
+      window.setTimeout(() => {
+        router.push(href);
+      }, 85);
+    }
+
+    setIsPressed(false);
+  };
+
+  const onTouchMove: React.TouchEventHandler<HTMLDivElement> = (event) => {
+    if (!touchStartRef.current) {
+      return;
+    }
+
+    const touch = event.touches[0];
+    const deltaX = Math.abs(touch.clientX - touchStartRef.current.x);
+    const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+
+    if (deltaX >= TAP_DISTANCE_THRESHOLD || deltaY >= TAP_DISTANCE_THRESHOLD) {
+      setIsPressed(false);
     }
   };
 
   return (
     <div className="space-y-2">
       <div
-        ref={trackRef}
-        className="carousel-track relative flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
-        onScroll={updateIndexFromScroll}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-        style={{ touchAction: "pan-x" }}
+        className={`relative overflow-hidden transition-transform duration-150 ${
+          isPressed ? "scale-[0.992]" : "scale-100"
+        }`}
       >
-        {assets.map((asset, index) => (
-          <div key={asset.id} className="carousel-slide relative w-full shrink-0 bg-white">
-            <div className="relative w-full" style={{ aspectRatio: asset.width && asset.height ? `${asset.width}/${asset.height}` : "4/5" }}>
-              <Image
-                src={asset.imageUrl}
-                alt={caption || "Photo post"}
-                fill
-                priority={index === 0}
-                sizes="100vw"
-                className="object-contain"
-              />
+        <div
+          ref={trackRef}
+          className="carousel-track relative flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
+          onScroll={updateIndexFromScroll}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          onTouchCancel={() => setIsPressed(false)}
+        >
+          {assets.map((asset, index) => (
+            <div key={asset.id} className="carousel-slide relative w-full shrink-0 bg-white">
+              <div className="relative w-full" style={{ aspectRatio: asset.width && asset.height ? `${asset.width}/${asset.height}` : "4/5" }}>
+                <Image
+                  src={asset.imageUrl}
+                  alt={caption || "Photo post"}
+                  fill
+                  priority={index === 0}
+                  sizes="100vw"
+                  className="object-contain"
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
 
-        {assets.length > 1 ? (
-          <div className="pointer-events-none absolute right-2 top-2 bg-zinc-800/70 px-2 py-0.5 text-[10px] text-zinc-100">
-            {activeIndex + 1}/{assets.length}
-          </div>
-        ) : null}
+          {assets.length > 1 ? (
+            <div className="pointer-events-none absolute right-2 top-2 bg-zinc-800/70 px-2 py-0.5 text-[10px] text-zinc-100">
+              {activeIndex + 1}/{assets.length}
+            </div>
+          ) : null}
+
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 bg-white transition-opacity duration-150 ${
+              isPressed ? "opacity-[0.12]" : "opacity-0"
+            }`}
+          />
+        </div>
       </div>
 
       {assets.length > 1 ? (

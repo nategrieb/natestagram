@@ -29,7 +29,7 @@ export function PhotoGrid({ posts }: PhotoGridProps) {
 
   return (
     <>
-      <section className="grid grid-cols-3 gap-px photo-grid pb-8">
+      <section className="photo-grid -mx-5 grid grid-cols-2 gap-px pb-8 sm:mx-0 sm:grid-cols-3">
         {posts.map((post, index) => (
           <button
             key={post.id}
@@ -42,7 +42,7 @@ export function PhotoGrid({ posts }: PhotoGridProps) {
               src={post.coverImageUrl}
               alt={post.caption || "Photo post"}
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 33vw"
               className="object-cover"
             />
             {post.assets.length > 1 ? (

@@ -64,6 +64,32 @@ export function PhotoCarousel({ assets, caption, captions, fullScreen = true, ve
     scrollToIndex(safeIndex);
   };
 
+  useEffect(() => {
+    const safeIndex = Math.max(0, Math.min(initialIndex, assets.length - 1));
+
+    // Wait one frame so dimensions are available before initial scroll.
+    const frame = requestAnimationFrame(() => {
+      const track = trackRef.current;
+      if (!track) {
+        return;
+      }
+
+      if (vertical) {
+        const slideHeight = track.clientHeight;
+        if (slideHeight > 0) {
+          track.scrollTo({ top: slideHeight * safeIndex, behavior: "auto" });
+        }
+      } else {
+        const slideWidth = track.clientWidth;
+        if (slideWidth > 0) {
+          track.scrollTo({ left: slideWidth * safeIndex, behavior: "auto" });
+        }
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [initialIndex, assets.length, vertical]);
+
   const handleTouchStart = (e: React.TouchEvent) => {
     const track = trackRef.current;
     if (!track) return;

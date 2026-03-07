@@ -34,7 +34,7 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
             className="absolute bottom-1.5 left-3 right-3 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100"
           />
         </Link>
-        <div className="flex gap-2 text-sm">
+        <div className="hidden gap-2 text-sm md:flex">
           {previousPost ? (
             <Link
               href={`/photo/${previousPost.id}`}
@@ -79,6 +79,50 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
           ) : null}
         </article>
       </section>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200/70 bg-white/90 px-4 py-3 backdrop-blur md:hidden">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
+          <Link
+            href="/"
+            className="group relative inline-flex items-center rounded-none border border-transparent px-3 py-2 text-xs font-medium tracking-[0.08em] text-zinc-600 transition-all duration-200 active:border-zinc-300/80 active:bg-white active:text-zinc-800"
+          >
+            <span>BACK</span>
+            <span
+              aria-hidden="true"
+              className="absolute bottom-1.5 left-3 right-3 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-active:scale-x-100"
+            />
+          </Link>
+
+          <div className="flex items-center gap-2">
+            {previousPost ? (
+              <Link
+                href={`/photo/${previousPost.id}`}
+                className="group relative inline-flex items-center rounded-none border border-transparent px-3 py-2 text-xs font-medium tracking-[0.08em] text-zinc-600 transition-all duration-200 active:border-zinc-300/80 active:bg-white active:text-zinc-800"
+                aria-label="Previous post"
+              >
+                <span>PREV</span>
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-1.5 left-3 right-3 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-active:scale-x-100"
+                />
+              </Link>
+            ) : null}
+            {nextPost ? (
+              <Link
+                href={`/photo/${nextPost.id}`}
+                className="group relative inline-flex items-center rounded-none border border-transparent px-3 py-2 text-xs font-medium tracking-[0.08em] text-zinc-600 transition-all duration-200 active:border-zinc-300/80 active:bg-white active:text-zinc-800"
+                aria-label="Next post"
+              >
+                <span>NEXT</span>
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-1.5 left-3 right-3 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-active:scale-x-100"
+                />
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

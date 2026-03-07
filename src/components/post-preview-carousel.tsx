@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 import type { PostAsset } from "@/types/photo";
@@ -8,13 +9,19 @@ import type { PostAsset } from "@/types/photo";
 type PostPreviewCarouselProps = {
   assets: PostAsset[];
   caption: string | null;
+  href?: string;
 };
 
-export function PostPreviewCarousel({ assets, caption }: PostPreviewCarouselProps) {
+const SWIPE_INDEX_ROUNDING = 0.5;
+const TAP_DISTANCE_THRESHOLD = 10;
+
+export function PostPreviewCarousel({ assets, caption, href }: PostPreviewCarouselProps) {
+  const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
   const trackRef = useRef<HTMLDivElement | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  const settleToNearestSlide = () => {
+  const updateIndexFromScroll = () => {
     const track = trackRef.current;
     if (!track) {
       return;
@@ -25,39 +32,39 @@ export function PostPreviewCarousel({ assets, caption }: PostPreviewCarouselProp
       return;
     }
 
-    const index = Math.round(track.scrollLeft / slideWidth);
-    const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
-    setActiveIndex(safeIndex);
-
-    track.scrollTo({
-      left: safeIndex * slideWidth,
-      behavior: "smooth",
-    });
+    const index = Math.floor(track.scrollLeft / slideWidth + SWIPE_INDEX_ROUNDING);
+    setActiveIndex(Math.max(0, Math.min(index, assets.length - 1)));
   };
 
-  const onScroll = () => {
-    const track = trackRef.current;
-    if (!track) {
+  const onTouchStart: React.TouchEventHandler<HTMLDivElement> = (event) => {
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const onTouchEnd: React.TouchEventHandler<HTMLDivElement> = (event) => {
+    if (!href || !touchStartRef.current) {
       return;
     }
 
-    const slideWidth = track.clientWidth;
-    if (slideWidth <= 0) {
-      return;
-    }
+    const touch = event.changedTouches[0];
+    const deltaX = Math.abs(touch.clientX - touchStartRef.current.x);
+    const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+    touchStartRef.current = null;
 
-    const index = Math.round(track.scrollLeft / slideWidth);
-    setActiveIndex(Math.max(0, Math.min(index, assets.length - 1)));
+    const isTap = deltaX < TAP_DISTANCE_THRESHOLD && deltaY < TAP_DISTANCE_THRESHOLD;
+    if (isTap) {
+      router.push(href);
+    }
   };
 
   return (
     <div className="space-y-2">
       <div
         ref={trackRef}
-        className="carousel-track flex snap-x snap-mandatory overflow-x-auto"
-        onScroll={onScroll}
-        onTouchEnd={settleToNearestSlide}
-        onPointerUp={settleToNearestSlide}
+        className="carousel-track relative flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
+        onScroll={updateIndexFromScroll}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
         style={{ touchAction: "pan-x" }}
       >
         {assets.map((asset, index) => (
@@ -74,6 +81,12 @@ export function PostPreviewCarousel({ assets, caption }: PostPreviewCarouselProp
             </div>
           </div>
         ))}
+
+        {assets.length > 1 ? (
+          <div className="pointer-events-none absolute right-2 top-2 bg-zinc-800/70 px-2 py-0.5 text-[10px] text-zinc-100">
+            {activeIndex + 1}/{assets.length}
+          </div>
+        ) : null}
       </div>
 
       {assets.length > 1 ? (

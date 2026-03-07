@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { PostPreviewCarousel } from "@/components/post-preview-carousel";
 import type { PhotoPost } from "@/types/photo";
 
 type HomeGalleryProps = {
@@ -76,30 +77,13 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
       <section className={`${mode === "scroll" ? "block" : "hidden"} md:hidden mobile-feed pb-16`}>
         {posts.map((post) => (
           <article key={post.id} className="mobile-feed-item py-2">
-            <Link href={`/photo/${post.id}`} className="block bg-transparent">
-              <div
-                className="relative w-full"
-                style={{
-                  aspectRatio:
-                    post.assets[0]?.width && post.assets[0]?.height
-                      ? `${post.assets[0].width}/${post.assets[0].height}`
-                      : "4/5",
-                }}
-              >
-                <Image
-                  src={post.coverImageUrl}
-                  alt={post.caption || "Photo post"}
-                  fill
-                  sizes="100vw"
-                  className="object-contain"
-                />
-              </div>
-            </Link>
-            <div className="mt-2 flex items-center justify-between px-1">
+            <PostPreviewCarousel
+              assets={post.assets}
+              caption={post.caption}
+              href={`/photo/${post.id}`}
+            />
+            <div className="mt-2 px-1">
               <p className="line-clamp-1 text-sm text-zinc-500">{post.caption || "Untitled post"}</p>
-              <Link href={`/photo/${post.id}`} className="text-sm text-zinc-400">
-                Open
-              </Link>
             </div>
           </article>
         ))}

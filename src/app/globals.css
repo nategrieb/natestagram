@@ -52,7 +52,7 @@ body {
   opacity: 1;
   animation: none;
   background: transparent;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 5;
 }
 
 .photo-tile:hover {

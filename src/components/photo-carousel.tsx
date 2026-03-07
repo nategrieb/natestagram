@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import type { PostAsset } from "@/types/photo";
 
@@ -10,14 +10,12 @@ type PhotoCarouselProps = {
   caption: string | null;
 };
 
-// Tuning knobs for mobile swipe feel.
-const SNAP_SETTLE_MS = 45;
-const SNAP_SETTLE_BEHAVIOR: ScrollBehavior = "auto";
+// Increase to switch slides earlier while swiping; decrease to require more drag.
+const SWIPE_INDEX_ROUNDING = 0.5;
 
 export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const trackRef = useRef<HTMLDivElement | null>(null);
-  const settleTimerRef = useRef<number | null>(null);
 
   const label = useMemo(() => caption || "Photo post", [caption]);
 
@@ -48,23 +46,6 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
     scrollToIndex(safeIndex);
   };
 
-  const settleToNearestSlide = () => {
-    const track = trackRef.current;
-    if (!track) {
-      return;
-    }
-
-    const slideWidth = track.clientWidth;
-    if (slideWidth <= 0) {
-      return;
-    }
-
-    const index = Math.round(track.scrollLeft / slideWidth);
-    const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
-    setActiveIndex(safeIndex);
-    scrollToIndex(safeIndex, SNAP_SETTLE_BEHAVIOR);
-  };
-
   const updateIndexFromScroll = () => {
     const track = trackRef.current;
     if (!track) {
@@ -76,26 +57,10 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
       return;
     }
 
-    const index = Math.round(track.scrollLeft / slideWidth);
+    const index = Math.floor(track.scrollLeft / slideWidth + SWIPE_INDEX_ROUNDING);
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
     setActiveIndex(safeIndex);
-
-    if (settleTimerRef.current) {
-      window.clearTimeout(settleTimerRef.current);
-    }
-
-    settleTimerRef.current = window.setTimeout(() => {
-      settleToNearestSlide();
-    }, SNAP_SETTLE_MS);
   };
-
-  useEffect(() => {
-    return () => {
-      if (settleTimerRef.current) {
-        window.clearTimeout(settleTimerRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div className="space-y-4">
@@ -105,8 +70,6 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
           className="carousel-track flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
           aria-label="Photo carousel"
           onScroll={updateIndexFromScroll}
-          onTouchEnd={settleToNearestSlide}
-          onPointerUp={settleToNearestSlide}
           style={{ touchAction: "pan-x" }}
         >
           {assets.map((asset, index) => (

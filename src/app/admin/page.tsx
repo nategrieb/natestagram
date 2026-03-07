@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { AdminPostGrid } from "@/components/admin-post-grid";
 import { AdminUploadForm } from "@/components/admin-upload-form";
+import { getAdminPosts } from "@/lib/photos";
 
 type AdminPageProps = {
   searchParams: Promise<{
@@ -10,32 +12,64 @@ type AdminPageProps = {
 };
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
+  const postsPromise = getAdminPosts();
   const query = await searchParams;
   const errorMessage = query.status === "error" ? query.message || "Upload failed." : null;
   const successMessage = query.status === "uploaded" ? "Post uploaded." : null;
+  const posts = await postsPromise;
 
   return (
-    <main className="relative mx-auto flex min-h-screen w-full max-w-3xl flex-col px-5 py-10 sm:px-8">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-3xl font-medium text-zinc-700 sm:text-4xl">Upload</h1>
-        <Link href="/" className="text-sm text-zinc-600 underline underline-offset-4 hover:text-zinc-900">
-          Back to gallery
-        </Link>
-      </div>
+    <div className="relative min-h-screen overflow-hidden pb-16">
+      <div className="backdrop-orb hidden sm:block" aria-hidden="true" />
+      <main className="mx-auto flex w-full max-w-7xl flex-col px-5 pt-10 sm:px-8 lg:px-14">
+        <header className="mb-8 flex items-center justify-between gap-6 sm:mb-10">
+          <Link
+            className="text-3xl leading-none text-zinc-400 transition hover:text-zinc-500"
+            href="/"
+            aria-label="Back to grid"
+            title="Grid"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </Link>
 
-      {successMessage ? (
-        <p className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-          {successMessage}
-        </p>
-      ) : null}
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-6 rounded-full bg-gradient-to-br from-green-800 to-green-600" aria-hidden="true" />
+            <h1 className="font-bold text-sm md:text-base text-zinc-900 tracking-wider">NATESTAGRAM</h1>
+          </div>
 
-      {errorMessage ? (
-        <p className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-800">
-          {errorMessage}
-        </p>
-      ) : null}
+          <div className="h-10 w-10" aria-hidden="true" />
+        </header>
 
-      <AdminUploadForm />
-    </main>
+        <div aria-hidden="true" className="mb-6 h-px w-full bg-zinc-300/40 sm:mb-8" />
+
+        {successMessage ? (
+          <p className="mb-4 border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">{successMessage}</p>
+        ) : null}
+
+        {errorMessage ? (
+          <p className="mb-4 border border-rose-200 bg-rose-50 px-4 py-3 text-rose-800">{errorMessage}</p>
+        ) : null}
+
+        <AdminUploadForm />
+
+        <div className="mt-6">
+          <AdminPostGrid posts={posts} />
+        </div>
+      </main>
+    </div>
   );
 }

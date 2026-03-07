@@ -61,7 +61,7 @@ export function AdminUploadForm() {
 
   return (
     <form
-      className="space-y-5 rounded-3xl border border-zinc-200 bg-white p-6 shadow-[0_16px_36px_rgba(15,23,42,0.06)]"
+      className="space-y-5 border border-zinc-200 bg-white p-6 shadow-[0_16px_36px_rgba(15,23,42,0.06)]"
       onSubmit={async (event) => {
         event.preventDefault();
         const target = event.currentTarget;
@@ -125,7 +125,7 @@ export function AdminUploadForm() {
       }}
     >
       {clientError ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-800">{clientError}</p>
+        <p className="border border-rose-200 bg-rose-50 px-4 py-3 text-rose-800">{clientError}</p>
       ) : null}
 
       <div className="space-y-2">
@@ -137,7 +137,7 @@ export function AdminUploadForm() {
           name="password"
           type="password"
           required
-          className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
+          className="w-full border border-zinc-300 px-4 py-3 outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
         />
       </div>
 
@@ -152,7 +152,7 @@ export function AdminUploadForm() {
           accept="image/*"
           multiple
           required
-          className="w-full rounded-xl border border-zinc-300 px-4 py-3"
+          className="w-full border border-zinc-300 px-4 py-3"
         />
         <p className="text-xs text-zinc-500">Select one or more photos for a single carousel post.</p>
         <p className="text-xs text-zinc-400">{helpText}</p>
@@ -166,7 +166,7 @@ export function AdminUploadForm() {
           id="caption"
           name="caption"
           rows={4}
-          className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
+          className="w-full border border-zinc-300 px-4 py-3 outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
           placeholder="Write the full caption shown in fullscreen mode"
         />
       </div>
@@ -180,7 +180,7 @@ export function AdminUploadForm() {
             id="takenAt"
             name="takenAt"
             type="date"
-            className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
+            className="w-full border border-zinc-300 px-4 py-3 outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
           />
         </div>
 
@@ -192,7 +192,7 @@ export function AdminUploadForm() {
             id="sortOrder"
             name="sortOrder"
             type="number"
-            className="w-full rounded-xl border border-zinc-300 px-4 py-3 outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
+            className="w-full border border-zinc-300 px-4 py-3 outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
             placeholder="Lower appears first"
           />
         </div>
@@ -205,7 +205,7 @@ export function AdminUploadForm() {
 
       <button
         type="submit"
-        className="rounded-full bg-stone-900 px-6 py-3 text-sm text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-70"
+        className="bg-stone-900 px-6 py-3 text-sm text-white transition hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-70"
         disabled={isSubmitting}
       >
         {isSubmitting ? "Uploading..." : "Upload post"}

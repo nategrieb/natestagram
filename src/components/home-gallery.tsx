@@ -53,23 +53,21 @@ export function HomeGallery({ posts, selectedId }: HomeGalleryProps) {
 
   return (
     <>
-      <section className="mobile-feed pb-16">
+      <section className="mobile-feed space-y-2 pb-8">
         {posts.map((post, index) => (
           <article
             key={post.id}
             ref={(item) => {
               mobileItemRefs.current[index] = item;
             }}
-            className="mobile-feed-item py-2"
+            className="mobile-feed-item py-0"
           >
             <PostPreviewCarousel
               assets={post.assets}
               caption={post.caption}
               onOpenModal={() => router.push(`/photo/${post.id}`)}
+              showCaptionOverlay={true}
             />
-            <div className="mt-2 px-1">
-              <p className="line-clamp-2 text-sm text-zinc-500">{post.caption || "Untitled post"}</p>
-            </div>
           </article>
         ))}
       </section>

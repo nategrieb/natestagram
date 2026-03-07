@@ -21,9 +21,7 @@ export function PhotoCarousel({ assets, caption, captions, fullScreen = true, ve
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const touchStartXRef = useRef<number | null>(null);
   const touchStartYRef = useRef<number | null>(null);
-  const touchStartScrollLeftRef = useRef<number>(0);
   const touchStartScrollTopRef = useRef<number>(0);
 
   const label = useMemo(() => {
@@ -93,41 +91,31 @@ export function PhotoCarousel({ assets, caption, captions, fullScreen = true, ve
   const handleTouchStart = (e: React.TouchEvent) => {
     const track = trackRef.current;
     if (!track) return;
-    
-    if (vertical) {
-      touchStartYRef.current = e.touches[0].clientY;
-      touchStartScrollTopRef.current = track.scrollTop;
-    } else {
-      touchStartXRef.current = e.touches[0].clientX;
-      touchStartScrollLeftRef.current = track.scrollLeft;
-    }
+
+    // Horizontal mode uses native touch scrolling for smoother swipes.
+    if (!vertical) return;
+
+    touchStartYRef.current = e.touches[0].clientY;
+    touchStartScrollTopRef.current = track.scrollTop;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     const track = trackRef.current;
     if (!track) return;
-    
-    if (vertical) {
-      if (touchStartYRef.current === null) return;
-      e.preventDefault();
-      const touchY = e.touches[0].clientY;
-      const deltaY = touchStartYRef.current - touchY;
-      track.scrollTop = touchStartScrollTopRef.current + deltaY;
-    } else {
-      if (touchStartXRef.current === null) return;
-      e.preventDefault();
-      const touchX = e.touches[0].clientX;
-      const deltaX = touchStartXRef.current - touchX;
-      track.scrollLeft = touchStartScrollLeftRef.current + deltaX;
-    }
+
+    if (!vertical) return;
+
+    if (touchStartYRef.current === null) return;
+    e.preventDefault();
+    const touchY = e.touches[0].clientY;
+    const deltaY = touchStartYRef.current - touchY;
+    track.scrollTop = touchStartScrollTopRef.current + deltaY;
   };
 
   const handleTouchEnd = () => {
-    if (vertical) {
-      touchStartYRef.current = null;
-    } else {
-      touchStartXRef.current = null;
-    }
+    if (!vertical) return;
+
+    touchStartYRef.current = null;
     settleToNearestSlide("smooth");
   };
 
@@ -220,8 +208,8 @@ export function PhotoCarousel({ assets, caption, captions, fullScreen = true, ve
         ref={trackRef}
         className={`carousel-track flex scroll-smooth ${fullScreen ? 'h-full' : 'h-[60vh]'} ${
           vertical
-            ? 'flex-col snap-y snap-mandatory overflow-y-auto overflow-x-hidden'
-            : 'snap-x snap-mandatory overflow-x-auto overflow-y-hidden'
+            ? 'flex-col snap-y snap-mandatory overflow-y-auto overflow-x-hidden touch-pan-y'
+            : 'snap-x snap-mandatory overflow-x-auto overflow-y-hidden touch-pan-x'
         }`}
         aria-label="Photo carousel"
         onScroll={updateIndexFromScroll}

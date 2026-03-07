@@ -29,7 +29,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
   };
 
   return (
-    <div className="space-y-2">
+    <div className={showCaptionOverlay ? "space-y-0" : "space-y-2"}>
       <div className="relative overflow-hidden">
         {canOpenModal ? (
           <button
@@ -63,8 +63,8 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
               className="pointer-events-none absolute inset-0 bg-white opacity-0 transition-opacity duration-150 group-active:opacity-[0.12]"
             />
             {showCaptionOverlay ? (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-3 text-white">
-                <p className="line-clamp-2 text-sm">{caption || "Untitled post"}</p>
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 text-white">
+                <p className="line-clamp-2 bg-black/45 px-2 py-1 text-sm">{caption || "Untitled post"}</p>
               </div>
             ) : null}
           </button>
@@ -91,8 +91,8 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
               ) : null}
             </div>
             {showCaptionOverlay ? (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-3 text-white">
-                <p className="line-clamp-2 text-sm">{caption || "Untitled post"}</p>
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 text-white">
+                <p className="line-clamp-2 bg-black/45 px-2 py-1 text-sm">{caption || "Untitled post"}</p>
               </div>
             ) : null}
           </div>
@@ -144,7 +144,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
         ) : null}
       </div>
 
-      {assets.length > 1 ? (
+      {assets.length > 1 && !showCaptionOverlay ? (
         <div className="flex items-center justify-center gap-1.5">
           {assets.map((asset, index) => (
             <span

@@ -31,6 +31,14 @@ function isLikelyImage(file: File) {
   return IMAGE_EXTENSIONS.has(getFileExtension(file.name));
 }
 
+function isLikelyImageFromNameType(fileName: string, fileType: string) {
+  if (fileType.startsWith("image/")) {
+    return true;
+  }
+
+  return IMAGE_EXTENSIONS.has(getFileExtension(fileName));
+}
+
 function jsonError(message: string, status = 400) {
   return NextResponse.json({ ok: false, message }, { status });
 }
@@ -93,10 +101,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, postId: postData.id });
     }
 
-    if (step === "asset") {
+    if (step === "prepare-asset") {
       const postId = formData.get("postId");
       const positionRaw = formData.get("position");
-      const photo = formData.get("photo");
+      const fileNameRaw = formData.get("fileName");
+      const fileTypeRaw = formData.get("fileType");
+      const fileSizeRaw = formData.get("fileSize");
 
       if (typeof postId !== "string" || postId.length === 0) {
         return jsonError("Missing post identifier.");
@@ -107,30 +117,62 @@ export async function POST(request: Request) {
         return jsonError("Missing photo position.");
       }
 
-      if (!(photo instanceof File) || photo.size <= 0) {
-        return jsonError("Missing photo file.");
+      const fileName = typeof fileNameRaw === "string" ? fileNameRaw : "";
+      const fileType = typeof fileTypeRaw === "string" ? fileTypeRaw : "";
+      const fileSize = typeof fileSizeRaw === "string" ? Number(fileSizeRaw) : Number.NaN;
+
+      if (!fileName) {
+        return jsonError("Missing file name.");
       }
 
-      if (!isLikelyImage(photo)) {
-        return jsonError(`Unsupported file type for ${photo.name}.`);
+      if (!Number.isFinite(fileSize) || fileSize <= 0) {
+        return jsonError("Missing file size.");
       }
 
-      if (photo.size > MAX_SINGLE_FILE_BYTES) {
-        return jsonError(`${photo.name} is too large. Keep each photo under 18MB.`);
+      if (!isLikelyImageFromNameType(fileName, fileType)) {
+        return jsonError(`Unsupported file type for ${fileName}.`);
       }
 
-      const extension = getFileExtension(photo.name) || "jpg";
-      const sanitizedName = photo.name.toLowerCase().replace(/[^a-z0-9.-]+/g, "-");
+      if (fileSize > MAX_SINGLE_FILE_BYTES) {
+        return jsonError(`${fileName} is too large. Keep each photo under 18MB.`);
+      }
+
+      const extension = getFileExtension(fileName) || "jpg";
+      const sanitizedName = fileName.toLowerCase().replace(/[^a-z0-9.-]+/g, "-");
       const storagePath = `${postId}/${position}-${Date.now()}-${sanitizedName.replace(/\.+/g, ".")}`;
-      const fileBuffer = await photo.arrayBuffer();
 
-      const { error: uploadError } = await supabase.storage.from(bucket).upload(storagePath, fileBuffer, {
-        contentType: photo.type || `image/${extension}`,
-        upsert: false,
+      const signed = await supabase.storage.from(bucket).createSignedUploadUrl(storagePath, { upsert: false });
+
+      if (signed.error || !signed.data) {
+        return jsonError(signed.error?.message || "Failed to prepare upload URL.", 500);
+      }
+
+      return NextResponse.json({
+        ok: true,
+        bucket,
+        path: signed.data.path,
+        token: signed.data.token,
+        contentType: fileType || `image/${extension}`,
       });
+    }
 
-      if (uploadError) {
-        return jsonError(uploadError.message, 500);
+    if (step === "register-asset") {
+      const postId = formData.get("postId");
+      const positionRaw = formData.get("position");
+      const storagePathRaw = formData.get("storagePath");
+
+      if (typeof postId !== "string" || postId.length === 0) {
+        return jsonError("Missing post identifier.");
+      }
+
+      const position = typeof positionRaw === "string" ? Number(positionRaw) : Number.NaN;
+      if (!Number.isFinite(position) || position < 0) {
+        return jsonError("Missing photo position.");
+      }
+
+      const storagePath = typeof storagePathRaw === "string" ? storagePathRaw : "";
+      if (!storagePath) {
+        return jsonError("Missing uploaded file path.");
       }
 
       const { error: insertError } = await supabase.from("post_assets").insert({

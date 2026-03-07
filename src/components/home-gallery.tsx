@@ -12,9 +12,9 @@ type HomeGalleryProps = {
 };
 
 const MOBILE_SETTLE_DELAY_MS = 110;
-const MOBILE_SETTLE_GRAVITY_RADIUS_PX = 44;
-const MOBILE_SETTLE_COMMIT_DISTANCE_PX = 64;
-const MOBILE_SETTLE_MAX_VELOCITY_PX_PER_MS = 0.55;
+const MOBILE_SETTLE_GRAVITY_RADIUS_PX = 30;
+const MOBILE_SETTLE_COMMIT_DISTANCE_PX = 40;
+const MOBILE_SETTLE_MAX_VELOCITY_PX_PER_MS = 0.4;
 const MOBILE_SETTLE_LOCK_MS = 300;
 
 export function HomeGallery({ posts, selectedId }: HomeGalleryProps) {

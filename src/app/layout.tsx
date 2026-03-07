@@ -10,6 +10,9 @@ const bodyFont = Manrope({
 export const metadata: Metadata = {
   title: "Natestagram",
   description: "A quiet, personal photo gallery without social noise.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

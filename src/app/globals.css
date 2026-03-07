@@ -23,11 +23,7 @@ body {
 }
 
 .font-display {
-  font-family: var(--font-display), "Iowan Old Style", serif;
-}
-
-.tracking-title {
-  letter-spacing: 0.16em;
+  font-family: var(--font-body), "Avenir Next", sans-serif;
 }
 
 .backdrop-orb {
@@ -44,43 +40,58 @@ body {
 .photo-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 
 .photo-tile {
   position: relative;
   overflow: hidden;
-  border-radius: 1.1rem;
-  border: 1px solid #e8edf4;
-  box-shadow:
-    0 14px 28px rgba(15, 23, 42, 0.08),
-    0 1px 0 rgba(255, 255, 255, 0.95) inset;
-  transform: translateY(10px);
-  opacity: 0;
-  animation: rise-in 500ms ease forwards;
-  background: #f8fafc;
-  aspect-ratio: 4 / 5;
+  border-radius: 0;
+  border: 1px solid #e9edf3;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.07);
+  transform: none;
+  opacity: 1;
+  animation: none;
+  background: #ffffff;
+  aspect-ratio: 1 / 1;
 }
 
 .photo-tile:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 20px 40px rgba(15, 23, 42, 0.12),
-    0 1px 0 rgba(255, 255, 255, 0.98) inset;
-  transition: transform 220ms ease, box-shadow 220ms ease;
+  transform: none;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.carousel-track {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-slide {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.carved-text {
+  color: #5e6773;
+  text-shadow: none;
 }
 
 @media (min-width: 640px) {
   .photo-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    gap: 10px;
   }
 }
 
 @media (min-width: 1024px) {
   .photo-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
+    gap: 12px;
   }
 }
 

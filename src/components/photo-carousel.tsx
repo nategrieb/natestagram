@@ -14,13 +14,44 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const slideRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const settleTimerRef = useRef<number | null>(null);
 
   const label = useMemo(() => caption || "Photo post", [caption]);
+
+  const scrollToIndex = (index: number, behavior: ScrollBehavior = "smooth") => {
+    const track = trackRef.current;
+    if (!track) {
+      return;
+    }
+
+    const slideWidth = track.clientWidth;
+    track.scrollTo({
+      left: slideWidth * index,
+      behavior,
+    });
+  };
 
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
     setActiveIndex(safeIndex);
-    slideRefs.current[safeIndex]?.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+    scrollToIndex(safeIndex);
+  };
+
+  const settleToNearestSlide = () => {
+    const track = trackRef.current;
+    if (!track) {
+      return;
+    }
+
+    const slideWidth = track.clientWidth;
+    if (slideWidth <= 0) {
+      return;
+    }
+
+    const index = Math.round(track.scrollLeft / slideWidth);
+    const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
+    setActiveIndex(safeIndex);
+    scrollToIndex(safeIndex);
   };
 
   const updateIndexFromScroll = () => {
@@ -37,16 +68,27 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
     const index = Math.round(track.scrollLeft / slideWidth);
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
     setActiveIndex(safeIndex);
+
+    if (settleTimerRef.current) {
+      window.clearTimeout(settleTimerRef.current);
+    }
+
+    settleTimerRef.current = window.setTimeout(() => {
+      settleToNearestSlide();
+    }, 90);
   };
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.08)]">
+      <div className="relative overflow-hidden">
         <div
           ref={trackRef}
-          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
+          className="carousel-track flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
           aria-label="Photo carousel"
           onScroll={updateIndexFromScroll}
+          onTouchEnd={settleToNearestSlide}
+          onPointerUp={settleToNearestSlide}
+          style={{ touchAction: "pan-y" }}
         >
           {assets.map((asset, index) => (
             <div
@@ -54,7 +96,7 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
               ref={(element) => {
                 slideRefs.current[index] = element;
               }}
-              className="relative h-[52vh] w-full shrink-0 snap-center sm:h-[64vh]"
+              className="carousel-slide relative h-[52vh] w-full shrink-0 sm:h-[64vh]"
               onFocus={() => setActiveIndex(index)}
             >
               <Image
@@ -63,7 +105,8 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
                 fill
                 priority={index === 0}
                 sizes="(max-width: 1024px) 100vw, 67vw"
-                className="object-contain"
+                className="pointer-events-none select-none object-contain drop-shadow-[0_14px_26px_rgba(15,23,42,0.22)]"
+                draggable={false}
               />
             </div>
           ))}

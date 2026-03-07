@@ -18,7 +18,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     <main className="relative mx-auto flex min-h-screen w-full max-w-3xl flex-col px-5 py-10 sm:px-8">
       <div className="backdrop-orb" aria-hidden="true" />
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="font-display text-4xl text-zinc-900 sm:text-5xl">Upload</h1>
+        <h1 className="text-3xl font-medium text-zinc-700 sm:text-4xl">Upload</h1>
         <Link href="/" className="text-sm text-zinc-600 underline underline-offset-4 hover:text-zinc-900">
           Back to gallery
         </Link>

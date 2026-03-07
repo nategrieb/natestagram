@@ -1,12 +1,6 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Manrope } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
-
-const displayFont = Cormorant_Garamond({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["500", "700"],
-});
 
 const bodyFont = Manrope({
   variable: "--font-body",
@@ -25,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${displayFont.variable} ${bodyFont.variable} antialiased`}>{children}</body>
+      <body className={`${bodyFont.variable} antialiased`}>{children}</body>
     </html>
   );
 }

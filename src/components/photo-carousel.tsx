@@ -10,6 +10,10 @@ type PhotoCarouselProps = {
   caption: string | null;
 };
 
+// Tuning knobs for mobile swipe feel.
+const SNAP_SETTLE_MS = 45;
+const SNAP_SETTLE_BEHAVIOR: ScrollBehavior = "auto";
+
 export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -58,7 +62,7 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
     const index = Math.round(track.scrollLeft / slideWidth);
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
     setActiveIndex(safeIndex);
-    scrollToIndex(safeIndex, "smooth");
+    scrollToIndex(safeIndex, SNAP_SETTLE_BEHAVIOR);
   };
 
   const updateIndexFromScroll = () => {
@@ -82,7 +86,7 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
 
     settleTimerRef.current = window.setTimeout(() => {
       settleToNearestSlide();
-    }, 120);
+    }, SNAP_SETTLE_MS);
   };
 
   useEffect(() => {

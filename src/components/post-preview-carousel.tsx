@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { PostAsset } from "@/types/photo";
@@ -9,11 +8,10 @@ import type { PostAsset } from "@/types/photo";
 type PostPreviewCarouselProps = {
   assets: PostAsset[];
   caption: string | null;
-  href?: string;
+  onOpenModal?: () => void;
 };
 
-export function PostPreviewCarousel({ assets, caption, href }: PostPreviewCarouselProps) {
-  const router = useRouter();
+export function PostPreviewCarousel({ assets, caption, onOpenModal }: PostPreviewCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const currentAsset = assets[activeIndex] ?? assets[0];
 
@@ -22,25 +20,10 @@ export function PostPreviewCarousel({ assets, caption, href }: PostPreviewCarous
     setActiveIndex(safeIndex);
   };
 
-  const openPost = () => {
-    if (!href) {
-      return;
+  const openModal = () => {
+    if (assets.length > 1 && onOpenModal) {
+      onOpenModal();
     }
-
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem(
-        "natestagram:return-home",
-        JSON.stringify({
-          mode: "scroll",
-          y: window.scrollY,
-        })
-      );
-    }
-
-    // Keep a short press-feedback frame before route transition.
-    window.setTimeout(() => {
-      router.push(href);
-    }, 85);
   };
 
   return (
@@ -48,7 +31,7 @@ export function PostPreviewCarousel({ assets, caption, href }: PostPreviewCarous
       <div className="relative overflow-hidden">
         <button
           type="button"
-          onClick={openPost}
+          onClick={openModal}
           className="group relative block w-full overflow-hidden text-left transition-transform duration-150 active:scale-[0.992]"
           aria-label="Open post"
         >

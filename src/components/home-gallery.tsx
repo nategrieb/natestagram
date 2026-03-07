@@ -1,79 +1,61 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { PhotoCarousel } from "@/components/photo-carousel";
 import { PostPreviewCarousel } from "@/components/post-preview-carousel";
 import type { PhotoPost } from "@/types/photo";
 
 type HomeGalleryProps = {
   posts: PhotoPost[];
+  selectedId?: string;
 };
 
 const MOBILE_SETTLE_DELAY_MS = 110;
-const MOBILE_SETTLE_COMMIT_DISTANCE_PX = 140;
-const MOBILE_SETTLE_LOCK_MS = 280;
+const MOBILE_SETTLE_GRAVITY_RADIUS_PX = 44;
+const MOBILE_SETTLE_COMMIT_DISTANCE_PX = 64;
+const MOBILE_SETTLE_MAX_VELOCITY_PX_PER_MS = 0.55;
+const MOBILE_SETTLE_LOCK_MS = 300;
 
-export function HomeGallery({ posts }: HomeGalleryProps) {
+export function HomeGallery({ posts, selectedId }: HomeGalleryProps) {
   const mobileItemRefs = useRef<Array<HTMLElement | null>>([]);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSettlingRef = useRef(false);
   const lastSnappedYRef = useRef<number | null>(null);
+  const lastScrollYRef = useRef(0);
+  const lastScrollTimeRef = useRef(0);
+  const lastVelocityRef = useRef(0);
 
-  const [mode, setMode] = useState<"grid" | "scroll">(() => {
-    if (typeof window === "undefined") {
-      return "scroll";
-    }
-
-    const stored = sessionStorage.getItem("natestagram:return-home");
-    if (!stored) {
-      return "scroll";
-    }
-
-    try {
-      const parsed = JSON.parse(stored) as { mode?: "grid" | "scroll" };
-      if (parsed.mode === "grid" || parsed.mode === "scroll") {
-        return parsed.mode;
-      }
-    } catch {
-      // Ignore malformed persisted mode and use default.
-    }
-
-    return "scroll";
-  });
+  const [modalPost, setModalPost] = useState<PhotoPost | null>(null);
 
   const hasPosts = useMemo(() => posts.length > 0, [posts]);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (!selectedId || typeof window === "undefined") {
       return;
     }
 
-    const stored = sessionStorage.getItem("natestagram:return-home");
-    if (!stored) {
+    const selectedIndex = posts.findIndex((post) => post.id === selectedId);
+    if (selectedIndex === -1) {
       return;
     }
 
-    try {
-      const parsed = JSON.parse(stored) as { y?: number };
-
-      const targetY = typeof parsed.y === "number" ? parsed.y : 0;
-      requestAnimationFrame(() => {
-        window.scrollTo(0, Math.max(0, targetY));
-      });
-    } catch {
-      // Ignore malformed persisted position.
+    const item = mobileItemRefs.current[selectedIndex];
+    if (!item) {
+      return;
     }
 
-    sessionStorage.removeItem("natestagram:return-home");
-  }, []);
+    requestAnimationFrame(() => {
+      const rect = item.getBoundingClientRect();
+      const viewportCenterY = window.innerHeight / 2;
+      const itemCenterY = rect.top + rect.height / 2;
+      const delta = itemCenterY - viewportCenterY;
+      const targetY = Math.max(0, window.scrollY + delta);
+      window.scrollTo(0, targetY);
+    });
+  }, [selectedId, posts]);
 
   useEffect(() => {
-    if (mode !== "scroll") {
-      return;
-    }
-
     if (typeof window === "undefined" || !window.matchMedia("(max-width: 767px)").matches) {
       return;
     }
@@ -108,6 +90,14 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
         return;
       }
 
+      if (Math.abs(bestDelta) > MOBILE_SETTLE_GRAVITY_RADIUS_PX) {
+        return;
+      }
+
+      if (Math.abs(lastVelocityRef.current) > MOBILE_SETTLE_MAX_VELOCITY_PX_PER_MS) {
+        return;
+      }
+
       const rawTargetY = Math.max(0, window.scrollY + bestDelta);
       let targetY = rawTargetY;
 
@@ -124,7 +114,7 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
       }
 
       isSettlingRef.current = true;
-      window.scrollTo({ top: targetY, behavior: "smooth" });
+      window.scrollTo({ top: targetY, behavior: "auto" });
       lastSnappedYRef.current = targetY;
       window.setTimeout(() => {
         isSettlingRef.current = false;
@@ -132,6 +122,19 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
     };
 
     const onScroll = () => {
+      const now = performance.now();
+      const y = window.scrollY;
+
+      if (lastScrollTimeRef.current > 0) {
+        const elapsed = now - lastScrollTimeRef.current;
+        if (elapsed > 0) {
+          lastVelocityRef.current = (y - lastScrollYRef.current) / elapsed;
+        }
+      }
+
+      lastScrollYRef.current = y;
+      lastScrollTimeRef.current = now;
+
       if (settleTimerRef.current) {
         clearTimeout(settleTimerRef.current);
       }
@@ -141,6 +144,8 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
 
     window.addEventListener("scroll", onScroll, { passive: true });
     lastSnappedYRef.current = window.scrollY;
+    lastScrollYRef.current = window.scrollY;
+    lastScrollTimeRef.current = performance.now();
 
     return () => {
       window.removeEventListener("scroll", onScroll);
@@ -148,7 +153,7 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
         clearTimeout(settleTimerRef.current);
       }
     };
-  }, [mode]);
+  }, []);
 
   if (!hasPosts) {
     return (
@@ -161,54 +166,7 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
 
   return (
     <>
-      <div className="mb-4 flex md:hidden">
-        <div className="inline-flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => setMode("grid")}
-            className={`text-sm transition ${
-              mode === "grid" ? "text-zinc-500 underline underline-offset-4" : "text-zinc-400"
-            }`}
-          >
-            Grid
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("scroll")}
-            className={`text-sm transition ${
-              mode === "scroll" ? "text-zinc-500 underline underline-offset-4" : "text-zinc-400"
-            }`}
-          >
-            Scroll
-          </button>
-        </div>
-      </div>
-
-      <section className={`${mode === "scroll" ? "hidden md:grid" : "grid"} grid-cols-3 md:grid-cols-3 photo-grid pb-8`}>
-        {posts.map((post, index) => (
-          <Link
-            key={post.id}
-            href={`/photo/${post.id}`}
-            className="photo-tile"
-            style={{ animationDelay: `${Math.min(index * 40, 500)}ms` }}
-          >
-            <Image
-              src={post.coverImageUrl}
-              alt={post.caption || "Photo post"}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-              className="object-cover"
-            />
-            {post.assets.length > 1 ? (
-              <span className="absolute right-2 top-2 rounded-full bg-zinc-800/75 px-2 py-0.5 text-[10px] text-zinc-100">
-                {post.assets.length} photos
-              </span>
-            ) : null}
-          </Link>
-        ))}
-      </section>
-
-      <section className={`${mode === "scroll" ? "block" : "hidden"} md:hidden mobile-feed pb-16`}>
+      <section className="mobile-feed pb-16">
         <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-1/2 z-30 -translate-y-1/2">
           <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-2">
             <span className="h-px w-5 bg-zinc-500/55" />
@@ -226,7 +184,7 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
             <PostPreviewCarousel
               assets={post.assets}
               caption={post.caption}
-              href={`/photo/${post.id}`}
+              onOpenModal={() => setModalPost(post)}
             />
             <div className="mt-2 px-1">
               <p className="line-clamp-1 text-sm text-zinc-500">{post.caption || "Untitled post"}</p>
@@ -234,6 +192,25 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
           </article>
         ))}
       </section>
+
+      {modalPost && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75">
+          <div className="relative max-h-full max-w-full">
+            <PhotoCarousel
+              assets={modalPost.assets}
+              caption={modalPost.caption}
+            />
+            <button
+              type="button"
+              onClick={() => setModalPost(null)}
+              className="absolute right-4 top-4 z-10 rounded-full bg-black/50 p-2 text-white"
+              aria-label="Close modal"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

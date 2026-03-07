@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { PostAsset } from "@/types/photo";
 
@@ -16,6 +16,7 @@ const SWIPE_INDEX_ROUNDING = 0.5;
 export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const trackRef = useRef<HTMLDivElement | null>(null);
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const label = useMemo(() => caption || "Photo post", [caption]);
 
@@ -46,6 +47,28 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
     scrollToIndex(safeIndex);
   };
 
+  const settleToNearestSlide = (behavior: ScrollBehavior = "smooth") => {
+    const track = trackRef.current;
+    if (!track) {
+      return;
+    }
+
+    const slideWidth = track.clientWidth;
+    if (slideWidth <= 0) {
+      return;
+    }
+
+    const index = Math.round(track.scrollLeft / slideWidth);
+    const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
+    const targetLeft = safeIndex * slideWidth;
+
+    setActiveIndex(safeIndex);
+
+    if (Math.abs(track.scrollLeft - targetLeft) > 1) {
+      track.scrollTo({ left: targetLeft, behavior });
+    }
+  };
+
   const updateIndexFromScroll = () => {
     const track = trackRef.current;
     if (!track) {
@@ -60,7 +83,24 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
     const index = Math.floor(track.scrollLeft / slideWidth + SWIPE_INDEX_ROUNDING);
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
     setActiveIndex(safeIndex);
+
+    if (settleTimerRef.current) {
+      clearTimeout(settleTimerRef.current);
+    }
+
+    // Adds a gentle "gravity" settle after momentum slows down.
+    settleTimerRef.current = setTimeout(() => {
+      settleToNearestSlide("smooth");
+    }, 90);
   };
+
+  useEffect(() => {
+    return () => {
+      if (settleTimerRef.current) {
+        clearTimeout(settleTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -70,6 +110,8 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
           className="carousel-track flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
           aria-label="Photo carousel"
           onScroll={updateIndexFromScroll}
+          onTouchEnd={() => settleToNearestSlide("smooth")}
+          onPointerUp={() => settleToNearestSlide("smooth")}
           style={{ touchAction: "pan-x" }}
         >
           {assets.map((asset, index) => (

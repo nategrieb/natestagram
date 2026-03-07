@@ -53,7 +53,7 @@ export function HomeGallery({ posts, selectedId }: HomeGalleryProps) {
 
   return (
     <>
-      <section className="mobile-feed space-y-2 pb-8">
+      <section className="mobile-feed space-y-1 pb-6">
         {posts.map((post, index) => (
           <article
             key={post.id}

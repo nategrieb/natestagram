@@ -16,6 +16,12 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
   const [activeIndex, setActiveIndex] = useState(0);
   const currentAsset = assets[activeIndex] ?? assets[0];
   const canOpenModal = Boolean(onOpenModal);
+  const frameClassName = showCaptionOverlay ? "relative h-[72dvh] w-full" : "relative w-full";
+  const frameStyle =
+    showCaptionOverlay || !(currentAsset?.width && currentAsset?.height)
+      ? undefined
+      : { aspectRatio: `${currentAsset.width}/${currentAsset.height}` };
+  const imageClassName = showCaptionOverlay ? "object-cover" : "object-contain";
 
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
@@ -38,15 +44,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
             className="group relative block w-full overflow-hidden text-left transition-transform duration-150 active:scale-[0.992]"
             aria-label="Open post details"
           >
-            <div
-              className="relative w-full"
-              style={{
-                aspectRatio:
-                  currentAsset?.width && currentAsset?.height
-                    ? `${currentAsset.width}/${currentAsset.height}`
-                    : "4/5",
-              }}
-            >
+            <div className={frameClassName} style={frameStyle}>
               {currentAsset ? (
                 <Image
                   src={currentAsset.imageUrl}
@@ -54,7 +52,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
                   fill
                   priority={activeIndex === 0}
                   sizes="100vw"
-                  className="object-contain"
+                  className={imageClassName}
                 />
               ) : null}
             </div>
@@ -64,21 +62,15 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
             />
             {showCaptionOverlay ? (
               <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 text-white">
-                <p className="line-clamp-2 bg-black/45 px-2 py-1 text-sm">{caption || "Untitled post"}</p>
+                <p className="line-clamp-2 text-sm text-white [text-shadow:0_1px_8px_rgba(0,0,0,0.9)]">
+                  {caption || "Untitled post"}
+                </p>
               </div>
             ) : null}
           </button>
         ) : (
           <div className="relative block w-full overflow-hidden">
-            <div
-              className="relative w-full"
-              style={{
-                aspectRatio:
-                  currentAsset?.width && currentAsset?.height
-                    ? `${currentAsset.width}/${currentAsset.height}`
-                    : "4/5",
-              }}
-            >
+            <div className={frameClassName} style={frameStyle}>
               {currentAsset ? (
                 <Image
                   src={currentAsset.imageUrl}
@@ -86,13 +78,15 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
                   fill
                   priority={activeIndex === 0}
                   sizes="100vw"
-                  className="object-contain"
+                  className={imageClassName}
                 />
               ) : null}
             </div>
             {showCaptionOverlay ? (
               <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 text-white">
-                <p className="line-clamp-2 bg-black/45 px-2 py-1 text-sm">{caption || "Untitled post"}</p>
+                <p className="line-clamp-2 text-sm text-white [text-shadow:0_1px_8px_rgba(0,0,0,0.9)]">
+                  {caption || "Untitled post"}
+                </p>
               </div>
             ) : null}
           </div>

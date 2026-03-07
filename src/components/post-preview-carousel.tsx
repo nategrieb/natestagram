@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import type { PostAsset } from "@/types/photo";
+import { cn } from "@/lib/utils";
 
 type PostPreviewCarouselProps = {
   assets: PostAsset[];
@@ -16,31 +17,17 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
   const [activeIndex, setActiveIndex] = useState(0);
   const currentAsset = assets[activeIndex] ?? assets[0];
   const canOpenModal = Boolean(onOpenModal);
-  const tallestFrameRatio = useMemo(() => {
-    const ratios = assets
-      .map((asset) => {
-        if (!asset.width || !asset.height || asset.width <= 0 || asset.height <= 0) {
-          return null;
-        }
-        return asset.width / asset.height;
-      })
-      .filter((value): value is number => typeof value === "number" && value > 0);
-
-    if (ratios.length === 0) {
-      return 4 / 5;
-    }
-
-    // Smaller width/height ratio means a taller frame at the same width.
-    return Math.min(...ratios);
-  }, [assets]);
-
-  const frameClassName = showCaptionOverlay ? "relative w-full" : "relative w-full";
   const frameStyle = showCaptionOverlay
-    ? { aspectRatio: String(tallestFrameRatio) }
+    ? undefined
     : currentAsset?.width && currentAsset?.height
       ? { aspectRatio: `${currentAsset.width}/${currentAsset.height}` }
       : { aspectRatio: "4/5" };
-  const imageClassName = "object-contain";
+
+  const frameClassName = cn(
+    "relative w-full overflow-hidden bg-neutral-950",
+    showCaptionOverlay ? "h-[84svh] sm:h-[88svh]" : "",
+  );
+  const imageClassName = showCaptionOverlay ? "object-cover" : "object-contain";
 
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));

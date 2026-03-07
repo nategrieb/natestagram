@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { PostPreviewCarousel } from "@/components/post-preview-carousel";
 import type { PhotoPost } from "@/types/photo";
@@ -11,7 +11,15 @@ type HomeGalleryProps = {
   posts: PhotoPost[];
 };
 
+const MOBILE_SETTLE_DELAY_MS = 110;
+const MOBILE_SETTLE_THRESHOLD_PX = 84;
+const MOBILE_SETTLE_TARGET_TOP_PX = 10;
+
 export function HomeGallery({ posts }: HomeGalleryProps) {
+  const mobileItemRefs = useRef<Array<HTMLElement | null>>([]);
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSettlingRef = useRef(false);
+
   const [mode, setMode] = useState<"grid" | "scroll">(() => {
     if (typeof window === "undefined") {
       return "scroll";
@@ -59,6 +67,68 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
 
     sessionStorage.removeItem("natestagram:return-home");
   }, []);
+
+  useEffect(() => {
+    if (mode !== "scroll") {
+      return;
+    }
+
+    if (typeof window === "undefined" || !window.matchMedia("(max-width: 767px)").matches) {
+      return;
+    }
+
+    const runSettle = () => {
+      if (isSettlingRef.current) {
+        return;
+      }
+
+      const candidates = mobileItemRefs.current.filter(
+        (item): item is HTMLElement => item instanceof HTMLElement
+      );
+
+      if (candidates.length === 0) {
+        return;
+      }
+
+      let bestDelta = Number.POSITIVE_INFINITY;
+
+      for (const item of candidates) {
+        const rect = item.getBoundingClientRect();
+        const delta = rect.top - MOBILE_SETTLE_TARGET_TOP_PX;
+
+        if (Math.abs(delta) < Math.abs(bestDelta)) {
+          bestDelta = delta;
+        }
+      }
+
+      if (!Number.isFinite(bestDelta) || Math.abs(bestDelta) > MOBILE_SETTLE_THRESHOLD_PX) {
+        return;
+      }
+
+      isSettlingRef.current = true;
+      window.scrollBy({ top: bestDelta, behavior: "smooth" });
+      window.setTimeout(() => {
+        isSettlingRef.current = false;
+      }, 260);
+    };
+
+    const onScroll = () => {
+      if (settleTimerRef.current) {
+        clearTimeout(settleTimerRef.current);
+      }
+
+      settleTimerRef.current = setTimeout(runSettle, MOBILE_SETTLE_DELAY_MS);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (settleTimerRef.current) {
+        clearTimeout(settleTimerRef.current);
+      }
+    };
+  }, [mode]);
 
   if (!hasPosts) {
     return (
@@ -119,8 +189,14 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
       </section>
 
       <section className={`${mode === "scroll" ? "block" : "hidden"} md:hidden mobile-feed pb-16`}>
-        {posts.map((post) => (
-          <article key={post.id} className="mobile-feed-item py-2">
+        {posts.map((post, index) => (
+          <article
+            key={post.id}
+            ref={(item) => {
+              mobileItemRefs.current[index] = item;
+            }}
+            className="mobile-feed-item py-2"
+          >
             <PostPreviewCarousel
               assets={post.assets}
               caption={post.caption}

@@ -16,7 +16,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   return (
     <main className="relative mx-auto flex min-h-screen w-full max-w-3xl flex-col px-5 py-10 sm:px-8">
-      <div className="backdrop-orb" aria-hidden="true" />
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-medium text-zinc-700 sm:text-4xl">Upload</h1>
         <Link href="/" className="text-sm text-zinc-600 underline underline-offset-4 hover:text-zinc-900">
@@ -38,7 +37,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
       <form
         action={uploadPhoto}
-        className="space-y-5 rounded-3xl border border-zinc-200 bg-white/90 p-6 shadow-[0_16px_36px_rgba(15,23,42,0.06)]"
+        className="space-y-5 rounded-3xl border border-zinc-200 bg-white p-6 shadow-[0_16px_36px_rgba(15,23,42,0.06)]"
       >
         <div className="space-y-2">
           <label className="block text-sm text-zinc-700" htmlFor="password">

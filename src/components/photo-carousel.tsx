@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { PostAsset } from "@/types/photo";
 
@@ -13,7 +13,6 @@ type PhotoCarouselProps = {
 export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const trackRef = useRef<HTMLDivElement | null>(null);
-  const slideRefs = useRef<Array<HTMLDivElement | null>>([]);
   const settleTimerRef = useRef<number | null>(null);
 
   const label = useMemo(() => caption || "Photo post", [caption]);
@@ -51,7 +50,7 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
     const index = Math.round(track.scrollLeft / slideWidth);
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
     setActiveIndex(safeIndex);
-    scrollToIndex(safeIndex);
+    scrollToIndex(safeIndex, "smooth");
   };
 
   const updateIndexFromScroll = () => {
@@ -75,8 +74,16 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
 
     settleTimerRef.current = window.setTimeout(() => {
       settleToNearestSlide();
-    }, 90);
+    }, 120);
   };
+
+  useEffect(() => {
+    return () => {
+      if (settleTimerRef.current) {
+        window.clearTimeout(settleTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -88,14 +95,11 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
           onScroll={updateIndexFromScroll}
           onTouchEnd={settleToNearestSlide}
           onPointerUp={settleToNearestSlide}
-          style={{ touchAction: "pan-y" }}
+          style={{ touchAction: "pan-x" }}
         >
           {assets.map((asset, index) => (
             <div
               key={asset.id}
-              ref={(element) => {
-                slideRefs.current[index] = element;
-              }}
               className="carousel-slide relative h-[52vh] w-full shrink-0 sm:h-[64vh]"
               onFocus={() => setActiveIndex(index)}
             >

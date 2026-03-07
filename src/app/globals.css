@@ -76,9 +76,29 @@ body {
   scroll-snap-stop: always;
 }
 
-.carved-text {
-  color: #5e6773;
-  text-shadow: none;
+.mobile-feed {
+  scroll-snap-type: y mandatory;
+}
+
+.mobile-feed-item {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+h1,
+h2,
+h3,
+p,
+span,
+a,
+button,
+label,
+legend,
+small,
+strong {
+  background-image: none !important;
+  -webkit-text-fill-color: currentColor;
+  text-shadow: none !important;
 }
 
 @media (min-width: 640px) {

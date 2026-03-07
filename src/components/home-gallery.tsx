@@ -12,13 +12,14 @@ type HomeGalleryProps = {
 };
 
 const MOBILE_SETTLE_DELAY_MS = 110;
-const MOBILE_SETTLE_THRESHOLD_PX = 84;
-const MOBILE_SETTLE_TARGET_TOP_PX = 10;
+const MOBILE_SETTLE_COMMIT_DISTANCE_PX = 140;
+const MOBILE_SETTLE_LOCK_MS = 280;
 
 export function HomeGallery({ posts }: HomeGalleryProps) {
   const mobileItemRefs = useRef<Array<HTMLElement | null>>([]);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSettlingRef = useRef(false);
+  const lastSnappedYRef = useRef<number | null>(null);
 
   const [mode, setMode] = useState<"grid" | "scroll">(() => {
     if (typeof window === "undefined") {
@@ -90,26 +91,44 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
         return;
       }
 
+      const viewportCenterY = window.innerHeight / 2;
       let bestDelta = Number.POSITIVE_INFINITY;
 
       for (const item of candidates) {
         const rect = item.getBoundingClientRect();
-        const delta = rect.top - MOBILE_SETTLE_TARGET_TOP_PX;
+        const itemCenterY = rect.top + rect.height / 2;
+        const delta = itemCenterY - viewportCenterY;
 
         if (Math.abs(delta) < Math.abs(bestDelta)) {
           bestDelta = delta;
         }
       }
 
-      if (!Number.isFinite(bestDelta) || Math.abs(bestDelta) > MOBILE_SETTLE_THRESHOLD_PX) {
+      if (!Number.isFinite(bestDelta)) {
+        return;
+      }
+
+      const rawTargetY = Math.max(0, window.scrollY + bestDelta);
+      let targetY = rawTargetY;
+
+      // Light roulette-style retraction for short drags near the current centered item.
+      if (
+        lastSnappedYRef.current !== null &&
+        Math.abs(rawTargetY - lastSnappedYRef.current) < MOBILE_SETTLE_COMMIT_DISTANCE_PX
+      ) {
+        targetY = lastSnappedYRef.current;
+      }
+
+      if (Math.abs(targetY - window.scrollY) < 1) {
         return;
       }
 
       isSettlingRef.current = true;
-      window.scrollBy({ top: bestDelta, behavior: "smooth" });
+      window.scrollTo({ top: targetY, behavior: "smooth" });
+      lastSnappedYRef.current = targetY;
       window.setTimeout(() => {
         isSettlingRef.current = false;
-      }, 260);
+      }, MOBILE_SETTLE_LOCK_MS);
     };
 
     const onScroll = () => {
@@ -121,6 +140,7 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
+    lastSnappedYRef.current = window.scrollY;
 
     return () => {
       window.removeEventListener("scroll", onScroll);
@@ -189,6 +209,12 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
       </section>
 
       <section className={`${mode === "scroll" ? "block" : "hidden"} md:hidden mobile-feed pb-16`}>
+        <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-1/2 z-30 -translate-y-1/2">
+          <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-2">
+            <span className="h-px w-5 bg-zinc-500/55" />
+            <span className="h-px w-5 bg-zinc-500/55" />
+          </div>
+        </div>
         {posts.map((post, index) => (
           <article
             key={post.id}

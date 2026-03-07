@@ -8,8 +8,19 @@ const bodyFont = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Natestagram",
+  title: "○ NATESTAGRAM",
   description: "A quiet, personal photo gallery without social noise.",
+  openGraph: {
+    title: "○ NATESTAGRAM",
+    description: "A quiet, personal photo gallery without social noise.",
+    siteName: "○ NATESTAGRAM",
+    type: "website",
+  },
+  twitter: {
+    title: "○ NATESTAGRAM",
+    description: "A quiet, personal photo gallery without social noise.",
+    card: "summary_large_image",
+  },
   icons: {
     icon: "/square-4-grid.svg",
   },

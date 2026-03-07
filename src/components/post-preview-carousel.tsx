@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useState } from "react";
 
 import type { PostAsset } from "@/types/photo";
-import { cn } from "@/lib/utils";
 
 type PostPreviewCarouselProps = {
   assets: PostAsset[];
@@ -23,10 +22,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
       ? { aspectRatio: `${currentAsset.width}/${currentAsset.height}` }
       : { aspectRatio: "4/5" };
 
-  const frameClassName = cn(
-    "relative w-full overflow-hidden bg-neutral-950",
-    showCaptionOverlay ? "h-[84svh] sm:h-[88svh]" : "",
-  );
+  const frameClassName = `relative w-full overflow-hidden bg-neutral-950 ${showCaptionOverlay ? "h-[84svh] sm:h-[88svh]" : ""}`;
   const imageClassName = showCaptionOverlay ? "object-cover" : "object-contain";
 
   const goToSlide = (index: number) => {

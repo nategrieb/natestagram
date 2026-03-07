@@ -28,7 +28,7 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
           href="/"
           className="text-sm text-zinc-500/90 transition hover:text-zinc-700"
         >
-          Back to grid
+          Back
         </Link>
         <div className="flex gap-2 text-sm">
           {previousPost ? (

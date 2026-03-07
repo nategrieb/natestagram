@@ -18,10 +18,10 @@ async function Gallery({
 
   return (
     <div className="relative min-h-screen overflow-hidden pb-16">
-      <div className="backdrop-orb" aria-hidden="true" />
+      <div className="backdrop-orb hidden sm:block" aria-hidden="true" />
       <main className="mx-auto flex w-full max-w-7xl flex-col px-5 pt-10 sm:px-8 lg:px-14">
         <header className="mb-8 flex items-center justify-between gap-6 sm:mb-10">
-          <h1 className="text-2xl font-medium tracking-tight text-zinc-500 sm:text-3xl">Natestagram</h1>
+          <h1 className="bg-none text-2xl font-medium tracking-tight text-zinc-500 sm:text-3xl">Natestagram</h1>
           <Link
             className="text-3xl leading-none text-zinc-400 transition hover:text-zinc-500"
             href="/admin"

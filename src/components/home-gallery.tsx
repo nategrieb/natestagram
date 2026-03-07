@@ -76,7 +76,7 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
       <section className={`${mode === "scroll" ? "block" : "hidden"} md:hidden mobile-feed pb-16`}>
         {posts.map((post) => (
           <article key={post.id} className="mobile-feed-item py-2">
-            <Link href={`/photo/${post.id}`} className="block bg-white">
+            <Link href={`/photo/${post.id}`} className="block bg-transparent">
               <div
                 className="relative w-full"
                 style={{

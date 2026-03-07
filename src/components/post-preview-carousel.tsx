@@ -16,14 +16,12 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
   const [activeIndex, setActiveIndex] = useState(0);
   const currentAsset = assets[activeIndex] ?? assets[0];
   const canOpenModal = Boolean(onOpenModal);
-  const frameStyle = showCaptionOverlay
-    ? undefined
-    : currentAsset?.width && currentAsset?.height
-      ? { aspectRatio: `${currentAsset.width}/${currentAsset.height}` }
-      : { aspectRatio: "4/5" };
+  const frameStyle = currentAsset?.width && currentAsset?.height
+    ? { aspectRatio: `${currentAsset.width}/${currentAsset.height}` }
+    : { aspectRatio: "4/5" };
 
-  const frameClassName = `relative w-full overflow-hidden bg-neutral-950 ${showCaptionOverlay ? "h-[84svh] sm:h-[88svh]" : ""}`;
-  const imageClassName = showCaptionOverlay ? "object-cover" : "object-contain";
+  const frameClassName = "relative w-full overflow-hidden bg-neutral-950";
+  const imageClassName = "object-contain";
 
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));

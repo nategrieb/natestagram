@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: "Natestagram",
   description: "A quiet, personal photo gallery without social noise.",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/square-4-grid.svg",
   },
 };
 

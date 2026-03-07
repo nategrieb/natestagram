@@ -38,25 +38,25 @@ body {
 }
 
 .photo-grid {
-  gap: 8px;
+  gap: 1px;
 }
 
 .photo-tile {
   position: relative;
   overflow: hidden;
   border-radius: 0;
-  border: 1px solid #e9edf3;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.07);
+  border: 0;
+  box-shadow: none;
   transform: none;
   opacity: 1;
   animation: none;
-  background: #ffffff;
+  background: transparent;
   aspect-ratio: 1 / 1;
 }
 
 .photo-tile:hover {
   transform: none;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  box-shadow: none;
 }
 
 .carousel-track {
@@ -101,13 +101,13 @@ strong {
 
 @media (min-width: 640px) {
   .photo-grid {
-    gap: 10px;
+    gap: 1px;
   }
 }
 
 @media (min-width: 1024px) {
   .photo-grid {
-    gap: 12px;
+    gap: 1px;
   }
 }
 

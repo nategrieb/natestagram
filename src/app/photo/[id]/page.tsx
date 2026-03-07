@@ -40,7 +40,7 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
           />
           <span
             aria-hidden="true"
-            className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100 group-active:scale-x-100"
+            className="absolute bottom-1.5 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100 group-active:scale-x-100"
           />
         </Link>
         <div className="hidden gap-2 text-sm md:flex">
@@ -53,7 +53,7 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
               <span aria-hidden="true" className="text-lg leading-none">&larr;</span>
               <span
                 aria-hidden="true"
-                className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100 group-active:scale-x-100"
+                className="absolute bottom-1.5 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100 group-active:scale-x-100"
               />
             </Link>
           ) : null}
@@ -66,7 +66,7 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
               <span aria-hidden="true" className="text-lg leading-none">&rarr;</span>
               <span
                 aria-hidden="true"
-                className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100 group-active:scale-x-100"
+                className="absolute bottom-1.5 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100 group-active:scale-x-100"
               />
             </Link>
           ) : null}
@@ -152,7 +152,7 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
                 <span aria-hidden="true" className="text-2xl leading-none">&larr;</span>
                 <span
                   aria-hidden="true"
-                  className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
+                  className="absolute bottom-1.5 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
                 />
               </Link>
             ) : null}
@@ -165,7 +165,7 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
                 <span aria-hidden="true" className="text-2xl leading-none">&rarr;</span>
                 <span
                   aria-hidden="true"
-                  className="absolute bottom-1.5 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
+                  className="absolute bottom-1.5 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
                 />
               </Link>
             ) : null}

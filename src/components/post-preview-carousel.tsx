@@ -78,7 +78,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal }: PostPrevie
               </span>
               <span
                 aria-hidden="true"
-                className="absolute bottom-3 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-100/90 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
+                className="absolute bottom-3 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-100/90 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
               />
             </button>
             <button
@@ -96,7 +96,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal }: PostPrevie
               </span>
               <span
                 aria-hidden="true"
-                className="absolute bottom-3 left-2 right-2 h-px origin-left scale-x-0 bg-zinc-100/90 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
+                className="absolute bottom-3 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-100/90 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
               />
             </button>
 

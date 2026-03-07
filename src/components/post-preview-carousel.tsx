@@ -16,12 +16,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
   const [activeIndex, setActiveIndex] = useState(0);
   const currentAsset = assets[activeIndex] ?? assets[0];
   const canOpenModal = Boolean(onOpenModal);
-  const frameStyle = currentAsset?.width && currentAsset?.height
-    ? { aspectRatio: `${currentAsset.width}/${currentAsset.height}` }
-    : { aspectRatio: "4/5" };
-
-  const frameClassName = "relative w-full overflow-hidden bg-neutral-950";
-  const imageClassName = "object-contain";
+  const frameClassName = "relative w-full overflow-hidden";
 
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
@@ -44,15 +39,16 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
             className="group relative block w-full overflow-hidden text-left transition-transform duration-150 active:scale-[0.992]"
             aria-label="Open post details"
           >
-            <div className={frameClassName} style={frameStyle}>
+            <div className={frameClassName}>
               {currentAsset ? (
                 <Image
                   src={currentAsset.imageUrl}
                   alt={caption || "Photo post"}
-                  fill
+                  width={currentAsset.width && currentAsset.width > 0 ? currentAsset.width : 1200}
+                  height={currentAsset.height && currentAsset.height > 0 ? currentAsset.height : 1200}
                   priority={activeIndex === 0}
                   sizes="100vw"
-                  className={imageClassName}
+                  className="block h-auto w-full"
                 />
               ) : null}
             </div>
@@ -70,15 +66,16 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
           </button>
         ) : (
           <div className="relative block w-full overflow-hidden">
-            <div className={frameClassName} style={frameStyle}>
+            <div className={frameClassName}>
               {currentAsset ? (
                 <Image
                   src={currentAsset.imageUrl}
                   alt={caption || "Photo post"}
-                  fill
+                  width={currentAsset.width && currentAsset.width > 0 ? currentAsset.width : 1200}
+                  height={currentAsset.height && currentAsset.height > 0 ? currentAsset.height : 1200}
                   priority={activeIndex === 0}
                   sizes="100vw"
-                  className={imageClassName}
+                  className="block h-auto w-full"
                 />
               ) : null}
             </div>

@@ -17,6 +17,14 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
 
   const label = useMemo(() => caption || "Photo post", [caption]);
 
+  const getSlideHeight = (asset: PostAsset) => {
+    if (asset.width && asset.height) {
+      return asset.height > asset.width ? "80vh" : "68vh";
+    }
+
+    return "72vh";
+  };
+
   const scrollToIndex = (index: number, behavior: ScrollBehavior = "smooth") => {
     const track = trackRef.current;
     if (!track) {
@@ -87,7 +95,7 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden">
+      <div className="group relative overflow-hidden bg-transparent">
         <div
           ref={trackRef}
           className="carousel-track flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
@@ -100,7 +108,8 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
           {assets.map((asset, index) => (
             <div
               key={asset.id}
-              className="carousel-slide relative h-[52vh] w-full shrink-0 sm:h-[64vh]"
+              className="carousel-slide relative w-full shrink-0"
+              style={{ height: getSlideHeight(asset) }}
               onFocus={() => setActiveIndex(index)}
             >
               <Image
@@ -109,7 +118,7 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
                 fill
                 priority={index === 0}
                 sizes="(max-width: 1024px) 100vw, 67vw"
-                className="pointer-events-none select-none object-contain drop-shadow-[0_14px_26px_rgba(15,23,42,0.22)]"
+                className="pointer-events-none select-none object-contain"
                 draggable={false}
               />
             </div>
@@ -122,24 +131,28 @@ export function PhotoCarousel({ assets, caption }: PhotoCarouselProps) {
               type="button"
               onClick={() => goToSlide(activeIndex - 1)}
               disabled={activeIndex === 0}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-zinc-300 bg-white/90 px-3 py-2 text-sm text-zinc-700 shadow-sm disabled:opacity-40"
+              className="absolute left-3 top-1/2 hidden -translate-y-1/2 items-center gap-1.5 rounded-full border border-zinc-200/0 bg-white/0 px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-zinc-500/0 opacity-0 transition-all duration-200 group-hover:text-zinc-500/95 group-hover:opacity-100 hover:border-zinc-300/80 hover:bg-white/75 hover:text-zinc-700 disabled:opacity-0 md:inline-flex"
+              aria-label="Previous photo"
             >
-              Prev
+              <span aria-hidden="true">&larr;</span>
+              <span>PREV</span>
             </button>
             <button
               type="button"
               onClick={() => goToSlide(activeIndex + 1)}
               disabled={activeIndex === assets.length - 1}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-zinc-300 bg-white/90 px-3 py-2 text-sm text-zinc-700 shadow-sm disabled:opacity-40"
+              className="absolute right-3 top-1/2 hidden -translate-y-1/2 items-center gap-1.5 rounded-full border border-zinc-200/0 bg-white/0 px-3 py-1.5 text-xs font-medium tracking-[0.08em] text-zinc-500/0 opacity-0 transition-all duration-200 group-hover:text-zinc-500/95 group-hover:opacity-100 hover:border-zinc-300/80 hover:bg-white/75 hover:text-zinc-700 disabled:opacity-0 md:inline-flex"
+              aria-label="Next photo"
             >
-              Next
+              <span>NEXT</span>
+              <span aria-hidden="true">&rarr;</span>
             </button>
           </>
         ) : null}
       </div>
 
       {assets.length > 1 ? (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full items-center justify-center gap-2">
           {assets.map((asset, index) => (
             <button
               key={asset.id}

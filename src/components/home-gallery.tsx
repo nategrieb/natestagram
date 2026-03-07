@@ -28,12 +28,12 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
   return (
     <>
       <div className="mb-4 flex md:hidden">
-        <div className="inline-flex rounded-full border border-zinc-200 bg-white/90 p-1 shadow-sm">
+        <div className="inline-flex items-center gap-4">
           <button
             type="button"
             onClick={() => setMode("grid")}
-            className={`rounded-full px-4 py-1.5 text-sm transition ${
-              mode === "grid" ? "bg-zinc-900 text-white" : "text-zinc-500"
+            className={`text-sm transition ${
+              mode === "grid" ? "text-zinc-500 underline underline-offset-4" : "text-zinc-400"
             }`}
           >
             Grid
@@ -41,8 +41,8 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
           <button
             type="button"
             onClick={() => setMode("scroll")}
-            className={`rounded-full px-4 py-1.5 text-sm transition ${
-              mode === "scroll" ? "bg-zinc-900 text-white" : "text-zinc-500"
+            className={`text-sm transition ${
+              mode === "scroll" ? "text-zinc-500 underline underline-offset-4" : "text-zinc-400"
             }`}
           >
             Scroll
@@ -50,7 +50,7 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
         </div>
       </div>
 
-      <section className={`${mode === "scroll" ? "hidden md:grid" : "grid"} photo-grid pb-8`}>
+      <section className={`${mode === "scroll" ? "hidden md:grid" : "grid"} grid-cols-3 md:grid-cols-3 photo-grid pb-8`}>
         {posts.map((post, index) => (
           <Link
             key={post.id}
@@ -66,7 +66,7 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
               className="object-cover"
             />
             {post.assets.length > 1 ? (
-              <span className="absolute right-3 top-3 rounded-full bg-zinc-900/75 px-3 py-1 text-xs text-zinc-100">
+              <span className="absolute right-2 top-2 rounded-full bg-zinc-800/75 px-2 py-0.5 text-[10px] text-zinc-100">
                 {post.assets.length} photos
               </span>
             ) : null}
@@ -79,8 +79,8 @@ export function HomeGallery({ posts }: HomeGalleryProps) {
           <article key={post.id} className="mobile-feed-item py-2">
             <PostPreviewCarousel assets={post.assets} caption={post.caption} />
             <div className="mt-2 flex items-center justify-between px-1">
-              <p className="line-clamp-1 text-sm text-zinc-600">{post.caption || "Untitled post"}</p>
-              <Link href={`/photo/${post.id}`} className="text-sm text-zinc-500">
+              <p className="line-clamp-1 text-sm text-zinc-500">{post.caption || "Untitled post"}</p>
+              <Link href={`/photo/${post.id}`} className="text-sm text-zinc-400">
                 Open
               </Link>
             </div>

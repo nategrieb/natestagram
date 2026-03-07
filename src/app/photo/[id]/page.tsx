@@ -53,7 +53,7 @@ export default async function PhotoPage({ params }: PhotoPageProps) {
       <section className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-5 px-4 pb-8 sm:px-8 lg:grid-cols-[2fr_1fr]">
         <PhotoCarousel assets={currentPost.assets} caption={currentPost.caption} />
 
-        <article className="border border-zinc-200 bg-white p-6 shadow-[0_8px_18px_rgba(15,23,42,0.05)] sm:p-8">
+        <article className="p-6 sm:p-8">
           <p className="text-xs uppercase tracking-[0.16em] text-zinc-400">Caption</p>
           <p className="mt-4 whitespace-pre-wrap text-2xl leading-snug text-zinc-600 sm:text-[1.65rem]">
             {currentPost.caption || "No caption provided."}

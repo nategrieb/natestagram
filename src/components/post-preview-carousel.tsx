@@ -18,7 +18,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
   const firstAsset = assets[0];
   const canOpenModal = Boolean(onOpenModal);
   const frameClassName = "relative w-full overflow-hidden";
-  const frameStyle = firstAsset.width && firstAsset.height ? { paddingBottom: `${(firstAsset.height / firstAsset.width) * 100}%` } : { paddingBottom: '66.67%' };
+  const frameStyle = { paddingBottom: `${((firstAsset.height || 1200) / (firstAsset.width || 1200)) * 100}%` };
 
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));

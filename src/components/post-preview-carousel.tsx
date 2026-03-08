@@ -18,7 +18,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
   const firstAsset = assets[0];
   const canOpenModal = Boolean(onOpenModal);
   const frameClassName = "relative w-full overflow-hidden";
-  const frameStyle = firstAsset.width && firstAsset.height ? { aspectRatio: `${firstAsset.width} / ${firstAsset.height}` } : {};
+  const frameStyle = firstAsset.width && firstAsset.height ? { paddingBottom: `${(firstAsset.height / firstAsset.width) * 100}%` } : { paddingBottom: '66.67%' };
 
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
@@ -48,7 +48,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
                   alt={caption || "Photo post"}
                   fill
                   priority={activeIndex === 0}
-                  className="object-cover"
+                  className="object-cover absolute inset-0"
                 />
               ) : null}
             </div>
@@ -73,7 +73,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
                   alt={caption || "Photo post"}
                   fill
                   priority={activeIndex === 0}
-                  className="object-cover"
+                  className="object-cover absolute inset-0"
                 />
               ) : null}
             </div>

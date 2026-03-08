@@ -17,6 +17,17 @@ export function HomeGallery({ posts, selectedId }: HomeGalleryProps) {
 
   const hasPosts = useMemo(() => posts.length > 0, [posts]);
 
+  // Calculate global aspect ratio from the first post's first asset
+  const globalAspectRatio = useMemo(() => {
+    if (!hasPosts) return undefined;
+    const firstPost = posts[0];
+    const firstAsset = firstPost.assets[0];
+    if (firstAsset && firstAsset.width && firstAsset.height) {
+      return firstAsset.width / firstAsset.height;
+    }
+    return undefined; // fallback to square or something
+  }, [posts, hasPosts]);
+
   useEffect(() => {
     if (!selectedId || typeof window === "undefined") {
       return;
@@ -67,6 +78,7 @@ export function HomeGallery({ posts, selectedId }: HomeGalleryProps) {
               caption={post.caption}
               onOpenModal={() => router.push(`/photo/${post.id}`)}
               showCaptionOverlay={true}
+              fixedAspectRatio={globalAspectRatio}
             />
           </article>
         ))}

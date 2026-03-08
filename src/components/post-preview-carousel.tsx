@@ -10,15 +10,16 @@ type PostPreviewCarouselProps = {
   caption: string | null;
   onOpenModal?: (initialIndex: number) => void;
   showCaptionOverlay?: boolean;
+  fixedAspectRatio?: number;
 };
 
-export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionOverlay = false }: PostPreviewCarouselProps) {
+export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionOverlay = false, fixedAspectRatio }: PostPreviewCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const currentAsset = assets[activeIndex] ?? assets[0];
   const firstAsset = assets[0];
   const canOpenModal = Boolean(onOpenModal);
   const frameClassName = "relative w-full overflow-hidden";
-  const frameStyle = { paddingBottom: `${((firstAsset.height || 1200) / (firstAsset.width || 1200)) * 100}%` };
+  const frameStyle = fixedAspectRatio ? { paddingBottom: `${(1 / fixedAspectRatio) * 100}%` } : { paddingBottom: `${((firstAsset.height || 1200) / (firstAsset.width || 1200)) * 100}%` };
 
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));

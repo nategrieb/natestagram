@@ -16,6 +16,7 @@ type AssetRow = {
   storage_path: string;
   width: number | null;
   height: number | null;
+  dominant_color: string | null;
   position: number;
   created_at: string;
 };
@@ -50,7 +51,7 @@ export async function getPublicPosts(): Promise<PhotoPost[]> {
 
     const { data: assetsData, error: assetsError } = await supabase
       .from("post_assets")
-      .select("id, post_id, storage_path, width, height, position, created_at")
+      .select("id, post_id, storage_path, width, height, dominant_color, position, created_at")
       .in("post_id", postIds)
       .order("position", { ascending: true })
       .order("created_at", { ascending: true });
@@ -120,7 +121,7 @@ export async function getAdminPosts(): Promise<PhotoPost[]> {
 
     const { data: assetsData, error: assetsError } = await supabase
       .from("post_assets")
-      .select("id, post_id, storage_path, width, height, position, created_at")
+      .select("id, post_id, storage_path, width, height, dominant_color, position, created_at")
       .in("post_id", postIds)
       .order("position", { ascending: true })
       .order("created_at", { ascending: true });

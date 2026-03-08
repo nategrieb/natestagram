@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import imageCompression from "browser-image-compression";
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 
@@ -22,6 +22,63 @@ const IMAGE_EXTENSIONS = new Set([
 
 function bytesToMb(bytes: number) {
   return bytes / (1024 * 1024);
+}
+
+function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = () => {
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: 0, height: 0 });
+    };
+    img.src = url;
+  });
+}
+
+function getDominantColor(file: File): Promise<string | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { URL.revokeObjectURL(url); resolve(null); return; }
+        ctx.drawImage(img, 0, 0, 1, 1);
+        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+        const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        resolve(hex);
+      } catch {
+        resolve(null);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
+async function getExifDate(file: File): Promise<string | null> {
+  try {
+    const exifr = (await import('exifr')).default;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = await (exifr as any).parse(file, { DateTimeOriginal: true, DateTimeDigitized: true, DateTime: true });
+    const raw = data?.DateTimeOriginal ?? data?.DateTimeDigitized ?? data?.DateTime;
+    if (!raw) return null;
+    const d = raw instanceof Date ? raw : new Date(raw);
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString().split('T')[0];
+  } catch {
+    return null;
+  }
 }
 
 function isLikelyImage(file: File) {
@@ -54,12 +111,21 @@ export function AdminUploadForm() {
   const router = useRouter();
   const [clientError, setClientError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [takenAtValue, setTakenAtValue] = useState("");
+  const takenAtRef = useRef<HTMLInputElement | null>(null);
 
   const helpText = useMemo(
     () =>
       `Max ${MAX_SINGLE_FILE_MB}MB per file. Images will be optimized for web if selected.`,
     []
   );
+
+  async function handleFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || takenAtValue) return; // don't overwrite if user already set a date
+    const date = await getExifDate(file);
+    if (date) setTakenAtValue(date);
+  }
 
   return (
     <form
@@ -177,12 +243,19 @@ const initResponse = await fetch("/api/admin/upload?step=init", {
               return;
             }
 
+            // Measure dimensions and dominant color from the processed file
+            const dims = await getImageDimensions(file);
+            const dominantColor = await getDominantColor(file);
+
             // Register asset
             const registerFormData = new FormData();
             registerFormData.append("password", (target.elements.namedItem("password") as HTMLInputElement).value);
             registerFormData.append("postId", postId);
             registerFormData.append("position", i.toString());
             registerFormData.append("storagePath", path);
+            if (dims.width > 0) registerFormData.append("width", dims.width.toString());
+            if (dims.height > 0) registerFormData.append("height", dims.height.toString());
+            if (dominantColor) registerFormData.append("dominantColor", dominantColor);
 
             const registerResponse = await fetch("/api/admin/upload?step=register-asset", {
               method: "POST",
@@ -248,6 +321,7 @@ const initResponse = await fetch("/api/admin/upload?step=init", {
           accept="image/*"
           multiple
           required
+          onChange={handleFilesChange}
           className="w-full border border-zinc-300 px-4 py-3"
         />
         <p className="text-xs text-zinc-500">Select one or more photos for a single carousel post.</p>
@@ -276,6 +350,9 @@ const initResponse = await fetch("/api/admin/upload?step=init", {
             id="takenAt"
             name="takenAt"
             type="date"
+            ref={takenAtRef}
+            value={takenAtValue}
+            onChange={(e) => setTakenAtValue(e.target.value)}
             className="w-full border border-zinc-300 px-4 py-3 outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
           />
         </div>

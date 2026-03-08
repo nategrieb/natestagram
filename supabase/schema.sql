@@ -15,6 +15,7 @@ create table if not exists public.post_assets (
   storage_path text not null unique,
   width integer,
   height integer,
+  dominant_color text,
   position integer not null default 0,
   created_at timestamptz not null default now()
 );

@@ -4,6 +4,7 @@ export type PostAsset = {
   storage_path: string;
   width: number | null;
   height: number | null;
+  dominant_color: string | null;
   position: number;
   created_at: string;
   imageUrl: string;

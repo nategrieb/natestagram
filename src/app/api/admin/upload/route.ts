@@ -190,10 +190,20 @@ export async function POST(request: Request) {
         return jsonError("Missing uploaded file path.");
       }
 
+      const widthRaw = formData.get("width");
+      const heightRaw = formData.get("height");
+      const dominantColorRaw = formData.get("dominantColor");
+      const width = typeof widthRaw === "string" && widthRaw ? Number(widthRaw) : null;
+      const height = typeof heightRaw === "string" && heightRaw ? Number(heightRaw) : null;
+      const dominantColor = typeof dominantColorRaw === "string" && dominantColorRaw ? dominantColorRaw : null;
+
       const { error: insertError } = await supabase.from("post_assets").insert({
         post_id: postId,
         storage_path: storagePath,
         position,
+        width: Number.isFinite(width) && width && width > 0 ? width : null,
+        height: Number.isFinite(height) && height && height > 0 ? height : null,
+        dominant_color: dominantColor,
       });
 
       if (insertError) {

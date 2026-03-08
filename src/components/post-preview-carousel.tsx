@@ -20,6 +20,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
   const canOpenModal = Boolean(onOpenModal);
   const frameClassName = "relative w-full overflow-hidden";
   const frameStyle = fixedAspectRatio ? { paddingBottom: `${(1 / fixedAspectRatio) * 100}%` } : { paddingBottom: `${((firstAsset.height || 1200) / (firstAsset.width || 1200)) * 100}%` };
+  const bgColor = firstAsset.dominant_color ?? undefined;
 
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
@@ -42,7 +43,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
             className="group relative block w-full overflow-hidden text-left transition-transform duration-150 active:scale-[0.992]"
             aria-label="Open post details"
           >
-            <div className={frameClassName} style={frameStyle}>
+            <div className={frameClassName} style={{ ...frameStyle, backgroundColor: bgColor }}>
               {currentAsset ? (
                 <Image
                   src={currentAsset.imageUrl}
@@ -67,7 +68,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
           </button>
         ) : (
           <div className="relative block w-full overflow-hidden">
-            <div className={frameClassName} style={frameStyle}>
+            <div className={frameClassName} style={{ ...frameStyle, backgroundColor: bgColor }}>
               {currentAsset ? (
                 <Image
                   src={currentAsset.imageUrl}

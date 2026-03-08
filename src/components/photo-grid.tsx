@@ -18,13 +18,7 @@ export function PhotoGrid({ posts }: PhotoGridProps) {
   const router = useRouter();
 
   const handlePhotoClick = (post: PhotoPost) => {
-    if (isTouchDevice) {
-      // Mobile: go to timeline feed focused on the selected post.
-      router.push(`/timeline?selected=${post.id}`);
-    } else {
-      // Desktop: navigate to individual photo page
-      router.push(`/photo/${post.id}`);
-    }
+    router.push(`/photo/${post.id}`);
   };
 
   return (

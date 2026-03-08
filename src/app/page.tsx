@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { PhotoGrid } from "@/components/photo-grid";
+import { ViewSwitcher } from "@/components/view-switcher";
 import { SiteLogoLink } from "@/components/site-logo-link";
 import { getPublicPosts } from "@/lib/photos";
 
@@ -39,7 +39,7 @@ async function Gallery({
 
         <div aria-hidden="true" className="mb-6 h-px w-full bg-zinc-300/40 sm:mb-8" />
 
-        <PhotoGrid posts={posts} />
+        <ViewSwitcher posts={posts} />
       </main>
     </div>
   );

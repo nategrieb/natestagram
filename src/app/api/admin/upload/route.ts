@@ -66,6 +66,11 @@ function validatePassword(formData: FormData) {
 }
 
 export async function POST(request: Request) {
+  // debug: ensure environment variables are loaded
+  console.log("DEBUG env NEXT_PUBLIC_SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log("DEBUG env ADMIN_SECRET_CODE", process.env.ADMIN_SECRET_CODE,
+    "legacy", process.env.ADMIN_UPLOAD_PASSWORD);
+
   try {
     const step = new URL(request.url).searchParams.get("step") ?? "legacy";
     const formData = await request.formData();
@@ -168,7 +173,6 @@ export async function POST(request: Request) {
         path: signed.data.path,
         token: signed.data.token,
         contentType: fileType || `image/${extension}`,
-        uploadUrl,
       });
     }
 

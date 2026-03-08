@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import imageCompression from "browser-image-compression";
+import { createSupabaseBrowserClient } from "@/lib/supabase";
 
 const MAX_SINGLE_FILE_MB = 18;
 const MAX_TOTAL_UPLOAD_MB = 24;
@@ -122,9 +123,7 @@ export function AdminUploadForm() {
           initFormData.append("caption", (target.elements.namedItem("caption") as HTMLTextAreaElement).value);
           initFormData.append("takenAt", (target.elements.namedItem("takenAt") as HTMLInputElement).value);
           initFormData.append("isPublic", (target.elements.namedItem("isPublic") as HTMLInputElement).checked ? "on" : "");
-          initFormData.append("sortOrder", (target.elements.namedItem("sortOrder") as HTMLInputElement).value);
-
-          const initResponse = await fetch("/api/admin/upload?step=init", {
+const initResponse = await fetch("/api/admin/upload?step=init", {
             method: "POST",
             body: initFormData,
           });
@@ -143,6 +142,8 @@ export function AdminUploadForm() {
 
             // Prepare asset
             const prepareFormData = new FormData();
+            // include secret code on every request so server can authenticate
+            prepareFormData.append("password", (target.elements.namedItem("password") as HTMLInputElement).value);
             prepareFormData.append("postId", postId);
             prepareFormData.append("position", i.toString());
             prepareFormData.append("fileName", file.name);
@@ -160,24 +161,25 @@ export function AdminUploadForm() {
             }
 
             const prepareData = await prepareResponse.json();
-            const { path, contentType, uploadUrl } = prepareData;
+            const { bucket, path, token } = prepareData;
 
-            // Upload to signed URL
-            const uploadResponse = await fetch(uploadUrl, {
-              method: "PUT",
-              body: file,
-              headers: {
-                "Content-Type": contentType,
-              },
-            });
+            // upload using Supabase client helper so we don't have to recreate
+            // the exact headers/body format that the JS SDK uses internally
+            const browserClient = createSupabaseBrowserClient();
+            const { error: uploadError } = await browserClient
+              .storage
+              .from(bucket)
+              .uploadToSignedUrl(path, token, file);
 
-            if (!uploadResponse.ok) {
-              setClientError("Failed to upload file to storage.");
+            if (uploadError) {
+              console.error("storage upload failed", uploadError.message, uploadError);
+              setClientError(`Failed to upload file to storage: ${uploadError.message}`);
               return;
             }
 
             // Register asset
             const registerFormData = new FormData();
+            registerFormData.append("password", (target.elements.namedItem("password") as HTMLInputElement).value);
             registerFormData.append("postId", postId);
             registerFormData.append("position", i.toString());
             registerFormData.append("storagePath", path);
@@ -195,6 +197,7 @@ export function AdminUploadForm() {
 
           // Step 5: Complete
           const completeFormData = new FormData();
+          completeFormData.append("password", (target.elements.namedItem("password") as HTMLInputElement).value);
           completeFormData.append("postId", postId);
 
           const completeResponse = await fetch("/api/admin/upload?step=complete", {
@@ -277,18 +280,7 @@ export function AdminUploadForm() {
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm text-zinc-700" htmlFor="sortOrder">
-            Sort order (optional)
-          </label>
-          <input
-            id="sortOrder"
-            name="sortOrder"
-            type="number"
-            className="w-full border border-zinc-300 px-4 py-3 outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
-            placeholder="Lower appears first"
-          />
-        </div>
+
       </div>
 
       <label className="flex items-center gap-3 text-sm text-zinc-700" htmlFor="isPublic">

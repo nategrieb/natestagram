@@ -33,7 +33,7 @@ export async function getPublicPosts(): Promise<PhotoPost[]> {
       .from("posts")
       .select("id, caption, taken_at, is_public, sort_order, created_at")
       .eq("is_public", true)
-      .order("sort_order", { ascending: true, nullsFirst: false })
+      .order("sort_order", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false });
 
     if (postsError) {
@@ -103,7 +103,7 @@ export async function getAdminPosts(): Promise<PhotoPost[]> {
     const { data: postsData, error: postsError } = await supabase
       .from("posts")
       .select("id, caption, taken_at, is_public, sort_order, created_at")
-      .order("sort_order", { ascending: true, nullsFirst: false })
+      .order("sort_order", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false });
 
     if (postsError) {

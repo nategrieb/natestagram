@@ -52,16 +52,12 @@ export async function uploadPhoto(formData: FormData) {
   const caption = formData.get("caption");
   const takenAt = formData.get("takenAt");
   const isPublic = formData.get("isPublic") === "on";
-  const sortOrderRaw = formData.get("sortOrder");
 
   const bucket = process.env.SUPABASE_STORAGE_BUCKET || "photos";
 
   const supabase = createSupabaseAdminClient();
 
-  const sortOrder =
-    typeof sortOrderRaw === "string" && sortOrderRaw.trim().length > 0
-      ? Number(sortOrderRaw)
-      : null;
+  const sortOrder = null; // always use default ordering
 
   const { data: postData, error: postInsertError } = await supabase
     .from("posts")

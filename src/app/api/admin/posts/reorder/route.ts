@@ -20,7 +20,7 @@ function validatePassword(password: string | undefined) {
   }
 
   if (!password || password !== expectedPassword) {
-    return { ok: false as const, response: jsonError("Incorrect admin password.", 401) };
+    return { ok: false as const, response: jsonError("Incorrect secret code.", 401) };
   }
 
   return { ok: true as const };

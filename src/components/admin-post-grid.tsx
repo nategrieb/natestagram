@@ -197,7 +197,7 @@ export function AdminPostGrid({ posts }: AdminPostGridProps) {
       <div className="flex flex-col gap-3 border border-zinc-200 p-4 sm:flex-row sm:items-end">
         <div className="flex-1 space-y-2">
           <label htmlFor="deletePassword" className="block text-xs font-medium text-zinc-700 uppercase tracking-wide">
-            Admin password
+            Secret code
           </label>
           <input
             id="deletePassword"
@@ -205,7 +205,7 @@ export function AdminPostGrid({ posts }: AdminPostGridProps) {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className="w-full border border-zinc-300 px-3 py-2 text-sm outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
-            placeholder="Required for delete"
+            placeholder="Enter secret code"
           />
         </div>
 

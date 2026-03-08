@@ -52,7 +52,7 @@ function validatePassword(formData: FormData) {
   }
 
   if (typeof password !== "string" || password !== expectedPassword) {
-    return { ok: false as const, response: jsonError("Incorrect admin password.", 401) };
+    return { ok: false as const, response: jsonError("Incorrect secret code.", 401) };
   }
 
   return { ok: true as const };
@@ -147,12 +147,21 @@ export async function POST(request: Request) {
         return jsonError(signed.error?.message || "Failed to prepare upload URL.", 500);
       }
 
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (!supabaseUrl) {
+        return jsonError("Supabase URL not configured.", 500);
+      }
+
+      const hostname = new URL(supabaseUrl).hostname;
+      const uploadUrl = `https://${hostname}/storage/v1/object/upload/sign/${signed.data.path}?token=${signed.data.token}`;
+
       return NextResponse.json({
         ok: true,
         bucket,
         path: signed.data.path,
         token: signed.data.token,
         contentType: fileType || `image/${extension}`,
+        uploadUrl,
       });
     }
 

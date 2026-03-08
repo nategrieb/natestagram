@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import imageCompression from "browser-image-compression";
 
 const MAX_SINGLE_FILE_MB = 18;
 const MAX_TOTAL_UPLOAD_MB = 24;
@@ -55,7 +56,7 @@ export function AdminUploadForm() {
 
   const helpText = useMemo(
     () =>
-      `Max ${MAX_SINGLE_FILE_MB}MB per file, ${MAX_TOTAL_UPLOAD_MB}MB total per upload. Large mobile photos can exceed this.`,
+      `Max ${MAX_SINGLE_FILE_MB}MB per file. Images will be optimized for web if selected.`,
     []
   );
 
@@ -67,6 +68,7 @@ export function AdminUploadForm() {
         const target = event.currentTarget;
         const fileInput = target.elements.namedItem("photos") as HTMLInputElement | null;
         const files = fileInput?.files;
+        const optimize = (target.elements.namedItem("optimize") as HTMLInputElement)?.checked ?? false;
 
         setClientError(null);
 
@@ -75,9 +77,28 @@ export function AdminUploadForm() {
           return;
         }
 
-        let totalBytes = 0;
+        const originalFiles = Array.from(files);
+        let processedFiles = originalFiles;
 
-        for (const file of Array.from(files)) {
+        if (optimize) {
+          try {
+            processedFiles = await Promise.all(
+              originalFiles.map(async (file) => {
+                const options = {
+                  maxSizeMB: 2,
+                  maxWidthOrHeight: 1920,
+                  useWebWorker: true,
+                };
+                return await imageCompression(file, options);
+              })
+            );
+          } catch (error) {
+            setClientError("Failed to optimize images. Please try again.");
+            return;
+          }
+        }
+
+        for (const file of processedFiles) {
           if (!isLikelyImage(file)) {
             setClientError(`\"${file.name}\" is not recognized as an image.`);
             return;
@@ -90,27 +111,99 @@ export function AdminUploadForm() {
             );
             return;
           }
-
-          totalBytes += file.size;
         }
 
-        const totalMb = bytesToMb(totalBytes);
-        if (totalMb > MAX_TOTAL_UPLOAD_MB) {
-          setClientError(`Total upload is ${totalMb.toFixed(1)}MB. Please keep it under ${MAX_TOTAL_UPLOAD_MB}MB.`);
-          return;
-        }
-
-        const formData = new FormData(target);
         setIsSubmitting(true);
 
         try {
-          const uploadResponse = await fetch("/api/admin/upload", {
+          // Step 1: Init post
+          const initFormData = new FormData();
+          initFormData.append("password", (target.elements.namedItem("password") as HTMLInputElement).value);
+          initFormData.append("caption", (target.elements.namedItem("caption") as HTMLTextAreaElement).value);
+          initFormData.append("takenAt", (target.elements.namedItem("takenAt") as HTMLInputElement).value);
+          initFormData.append("isPublic", (target.elements.namedItem("isPublic") as HTMLInputElement).checked ? "on" : "");
+          initFormData.append("sortOrder", (target.elements.namedItem("sortOrder") as HTMLInputElement).value);
+
+          const initResponse = await fetch("/api/admin/upload?step=init", {
             method: "POST",
-            body: formData,
+            body: initFormData,
           });
 
-          if (!uploadResponse.ok) {
-            setClientError(await readErrorMessage(uploadResponse));
+          if (!initResponse.ok) {
+            setClientError(await readErrorMessage(initResponse));
+            return;
+          }
+
+          const initData = await initResponse.json();
+          const postId = initData.postId;
+
+          // Step 2-4: For each file
+          for (let i = 0; i < processedFiles.length; i++) {
+            const file = processedFiles[i];
+
+            // Prepare asset
+            const prepareFormData = new FormData();
+            prepareFormData.append("postId", postId);
+            prepareFormData.append("position", i.toString());
+            prepareFormData.append("fileName", file.name);
+            prepareFormData.append("fileType", file.type);
+            prepareFormData.append("fileSize", file.size.toString());
+
+            const prepareResponse = await fetch("/api/admin/upload?step=prepare-asset", {
+              method: "POST",
+              body: prepareFormData,
+            });
+
+            if (!prepareResponse.ok) {
+              setClientError(await readErrorMessage(prepareResponse));
+              return;
+            }
+
+            const prepareData = await prepareResponse.json();
+            const { path, contentType, uploadUrl } = prepareData;
+
+            // Upload to signed URL
+            const uploadResponse = await fetch(uploadUrl, {
+              method: "PUT",
+              body: file,
+              headers: {
+                "Content-Type": contentType,
+              },
+            });
+
+            if (!uploadResponse.ok) {
+              setClientError("Failed to upload file to storage.");
+              return;
+            }
+
+            // Register asset
+            const registerFormData = new FormData();
+            registerFormData.append("postId", postId);
+            registerFormData.append("position", i.toString());
+            registerFormData.append("storagePath", path);
+
+            const registerResponse = await fetch("/api/admin/upload?step=register-asset", {
+              method: "POST",
+              body: registerFormData,
+            });
+
+            if (!registerResponse.ok) {
+              setClientError(await readErrorMessage(registerResponse));
+              return;
+            }
+          }
+
+          // Step 5: Complete
+          const completeFormData = new FormData();
+          completeFormData.append("postId", postId);
+
+          const completeResponse = await fetch("/api/admin/upload?step=complete", {
+            method: "POST",
+            body: completeFormData,
+          });
+
+          if (!completeResponse.ok) {
+            setClientError(await readErrorMessage(completeResponse));
             return;
           }
 
@@ -130,7 +223,7 @@ export function AdminUploadForm() {
 
       <div className="space-y-2">
         <label className="block text-sm text-zinc-700" htmlFor="password">
-          Admin password
+          Secret code
         </label>
         <input
           id="password"
@@ -201,6 +294,11 @@ export function AdminUploadForm() {
       <label className="flex items-center gap-3 text-sm text-zinc-700" htmlFor="isPublic">
         <input id="isPublic" name="isPublic" type="checkbox" defaultChecked className="h-4 w-4" />
         Visible in public gallery
+      </label>
+
+      <label className="flex items-center gap-3 text-sm text-zinc-700" htmlFor="optimize">
+        <input id="optimize" name="optimize" type="checkbox" defaultChecked className="h-4 w-4" />
+        Optimize images for web (reduce file size)
       </label>
 
       <button

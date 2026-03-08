@@ -21,7 +21,7 @@ export async function uploadPhoto(formData: FormData) {
   }
 
   if (typeof password !== "string" || password !== expectedPassword) {
-    redirectWithError("Incorrect admin password.");
+    redirectWithError("Incorrect secret code.");
   }
 
   const fileEntries = formData

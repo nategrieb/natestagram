@@ -13,10 +13,16 @@ function jsonError(message: string, status = 400) {
 }
 
 function validatePassword(password: string | undefined) {
-  const expectedPassword = process.env.ADMIN_UPLOAD_PASSWORD;
+  const expectedPassword = process.env.ADMIN_SECRET_CODE ?? process.env.ADMIN_UPLOAD_PASSWORD;
 
   if (!expectedPassword) {
-    return { ok: false as const, response: jsonError("ADMIN_UPLOAD_PASSWORD is missing in environment variables.", 500) };
+    return {
+      ok: false as const,
+      response: jsonError(
+        "ADMIN_SECRET_CODE (or legacy ADMIN_UPLOAD_PASSWORD) is missing in environment variables.",
+        500
+      ),
+    };
   }
 
   if (!password || password !== expectedPassword) {

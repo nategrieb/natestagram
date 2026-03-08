@@ -36,7 +36,10 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 SUPABASE_STORAGE_BUCKET=photos
-ADMIN_UPLOAD_PASSWORD=choose-a-strong-password
+# you can use either variable name; ADMIN_SECRET_CODE is preferred
+ADMIN_SECRET_CODE=choose-a-strong-secret
+# legacy name still supported:
+# ADMIN_UPLOAD_PASSWORD=choose-a-strong-secret
 ```
 
 4. In Supabase SQL editor, run `supabase/schema.sql`.

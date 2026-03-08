@@ -14,10 +14,12 @@ function redirectWithError(message: string): never {
 
 export async function uploadPhoto(formData: FormData) {
   const password = formData.get("password");
-  const expectedPassword = process.env.ADMIN_UPLOAD_PASSWORD;
+  const expectedPassword = process.env.ADMIN_SECRET_CODE ?? process.env.ADMIN_UPLOAD_PASSWORD;
 
   if (!expectedPassword) {
-    redirectWithError("ADMIN_UPLOAD_PASSWORD is missing in environment variables.");
+    redirectWithError(
+      "ADMIN_SECRET_CODE (or legacy ADMIN_UPLOAD_PASSWORD) is missing in environment variables."
+    );
   }
 
   if (typeof password !== "string" || password !== expectedPassword) {

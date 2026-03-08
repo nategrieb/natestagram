@@ -18,6 +18,7 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
   const firstAsset = assets[0];
   const canOpenModal = Boolean(onOpenModal);
   const frameClassName = "relative w-full overflow-hidden";
+  const frameStyle = firstAsset.width && firstAsset.height ? { aspectRatio: `${firstAsset.width} / ${firstAsset.height}` } : {};
 
   const goToSlide = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
@@ -40,16 +41,14 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
             className="group relative block w-full overflow-hidden text-left transition-transform duration-150 active:scale-[0.992]"
             aria-label="Open post details"
           >
-            <div className={frameClassName}>
+            <div className={frameClassName} style={frameStyle}>
               {currentAsset ? (
                 <Image
                   src={currentAsset.imageUrl}
                   alt={caption || "Photo post"}
-                  width={firstAsset.width && firstAsset.width > 0 ? firstAsset.width : 1200}
-                  height={firstAsset.height && firstAsset.height > 0 ? firstAsset.height : 1200}
+                  fill
                   priority={activeIndex === 0}
-                  sizes="100vw"
-                  className="block h-auto w-full"
+                  className="object-cover"
                 />
               ) : null}
             </div>
@@ -67,16 +66,14 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
           </button>
         ) : (
           <div className="relative block w-full overflow-hidden">
-            <div className={frameClassName}>
+            <div className={frameClassName} style={frameStyle}>
               {currentAsset ? (
                 <Image
                   src={currentAsset.imageUrl}
                   alt={caption || "Photo post"}
-                  width={firstAsset.width && firstAsset.width > 0 ? firstAsset.width : 1200}
-                  height={firstAsset.height && firstAsset.height > 0 ? firstAsset.height : 1200}
+                  fill
                   priority={activeIndex === 0}
-                  sizes="100vw"
-                  className="block h-auto w-full"
+                  className="object-cover"
                 />
               ) : null}
             </div>

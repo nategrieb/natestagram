@@ -15,6 +15,7 @@ type PostPreviewCarouselProps = {
 export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionOverlay = false }: PostPreviewCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const currentAsset = assets[activeIndex] ?? assets[0];
+  const firstAsset = assets[0];
   const canOpenModal = Boolean(onOpenModal);
   const frameClassName = "relative w-full overflow-hidden";
 
@@ -44,8 +45,8 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
                 <Image
                   src={currentAsset.imageUrl}
                   alt={caption || "Photo post"}
-                  width={currentAsset.width && currentAsset.width > 0 ? currentAsset.width : 1200}
-                  height={currentAsset.height && currentAsset.height > 0 ? currentAsset.height : 1200}
+                  width={firstAsset.width && firstAsset.width > 0 ? firstAsset.width : 1200}
+                  height={firstAsset.height && firstAsset.height > 0 ? firstAsset.height : 1200}
                   priority={activeIndex === 0}
                   sizes="100vw"
                   className="block h-auto w-full"
@@ -71,8 +72,8 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
                 <Image
                   src={currentAsset.imageUrl}
                   alt={caption || "Photo post"}
-                  width={currentAsset.width && currentAsset.width > 0 ? currentAsset.width : 1200}
-                  height={currentAsset.height && currentAsset.height > 0 ? currentAsset.height : 1200}
+                  width={firstAsset.width && firstAsset.width > 0 ? firstAsset.width : 1200}
+                  height={firstAsset.height && firstAsset.height > 0 ? firstAsset.height : 1200}
                   priority={activeIndex === 0}
                   sizes="100vw"
                   className="block h-auto w-full"

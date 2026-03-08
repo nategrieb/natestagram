@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Backfill width/height for post_assets rows that have null dimensions.
+ * Backfill width/height, dominant_color, and camera EXIF metadata
+ * for post_assets rows that are missing any of those values.
  *
  * Usage:
  *   node scripts/backfill-dimensions.mjs
@@ -12,6 +13,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
+import exifr from "exifr";
 
 // Load .env.local
 const envPath = path.join(process.cwd(), ".env.local");
@@ -38,18 +40,18 @@ const supabase = createClient(supabaseUrl, serviceKey, {
   auth: { persistSession: false },
 });
 
-// Fetch all assets with missing dimensions or dominant_color
+// Fetch all assets with missing dimensions, dominant_color, or camera_make
 const { data: assets, error } = await supabase
   .from("post_assets")
   .select("id, storage_path")
-  .or("width.is.null,height.is.null,dominant_color.is.null");
+  .or("width.is.null,height.is.null,dominant_color.is.null,camera_make.is.null");
 
 if (error) {
   console.error("Failed to fetch assets:", error.message);
   process.exit(1);
 }
 
-console.log(`Found ${assets.length} assets needing dimension backfill.`);
+console.log(`Found ${assets.length} assets needing backfill.`);
 
 let updated = 0;
 let failed = 0;
@@ -87,6 +89,27 @@ for (const asset of assets) {
       dominant_color = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     } catch { /* leave null */ }
 
+    // Extract camera EXIF
+    let camera_make = null, camera_model = null, focal_length = null;
+    let aperture = null, shutter_speed = null, iso = null;
+    try {
+      const exifData = await exifr.parse(buffer, {
+        Make: true, Model: true, FocalLength: true,
+        FNumber: true, ExposureTime: true, ISO: true,
+      });
+      if (exifData) {
+        camera_make = exifData.Make ?? null;
+        camera_model = exifData.Model ?? null;
+        if (exifData.FocalLength != null) focal_length = `${Math.round(exifData.FocalLength)}mm`;
+        if (exifData.FNumber != null) aperture = `f/${exifData.FNumber}`;
+        if (exifData.ExposureTime != null) {
+          const et = exifData.ExposureTime;
+          shutter_speed = et < 1 ? `1/${Math.round(1 / et)}s` : `${et}s`;
+        }
+        iso = exifData.ISO ?? null;
+      }
+    } catch { /* leave null — image may not have EXIF */ }
+
     if (!width || !height) {
       console.warn(`  [skip] ${asset.id} — sharp couldn't read dimensions`);
       failed++;
@@ -95,14 +118,15 @@ for (const asset of assets) {
 
     const { error: updateError } = await supabase
       .from("post_assets")
-      .update({ width, height, dominant_color })
+      .update({ width, height, dominant_color, camera_make, camera_model, focal_length, aperture, shutter_speed, iso })
       .eq("id", asset.id);
 
     if (updateError) {
       console.error(`  [fail] ${asset.id} — ${updateError.message}`);
       failed++;
     } else {
-      console.log(`  [ok]   ${asset.id} — ${width}x${height} ${dominant_color ?? '(no color)'}`);
+      const cam = [camera_make, camera_model].filter(Boolean).join(" ") || "(no camera EXIF)";
+      console.log(`  [ok]   ${asset.id} — ${width}x${height} ${dominant_color ?? '(no color)'} | ${cam}`);
       updated++;
     }
   } catch (err) {

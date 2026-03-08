@@ -197,6 +197,15 @@ export async function POST(request: Request) {
       const height = typeof heightRaw === "string" && heightRaw ? Number(heightRaw) : null;
       const dominantColor = typeof dominantColorRaw === "string" && dominantColorRaw ? dominantColorRaw : null;
 
+      const str = (key: string) => { const v = formData.get(key); return typeof v === "string" && v ? v : null; };
+      const cameraMake = str("cameraMake");
+      const cameraModel = str("cameraModel");
+      const focalLength = str("focalLength");
+      const aperture = str("aperture");
+      const shutterSpeed = str("shutterSpeed");
+      const isoRaw = str("iso");
+      const iso = isoRaw ? Number(isoRaw) : null;
+
       const { error: insertError } = await supabase.from("post_assets").insert({
         post_id: postId,
         storage_path: storagePath,
@@ -204,6 +213,12 @@ export async function POST(request: Request) {
         width: Number.isFinite(width) && width && width > 0 ? width : null,
         height: Number.isFinite(height) && height && height > 0 ? height : null,
         dominant_color: dominantColor,
+        camera_make: cameraMake,
+        camera_model: cameraModel,
+        focal_length: focalLength,
+        aperture,
+        shutter_speed: shutterSpeed,
+        iso: Number.isFinite(iso) && iso ? iso : null,
       });
 
       if (insertError) {

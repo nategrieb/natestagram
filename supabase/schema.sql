@@ -16,6 +16,12 @@ create table if not exists public.post_assets (
   width integer,
   height integer,
   dominant_color text,
+  camera_make text,
+  camera_model text,
+  focal_length text,
+  aperture text,
+  shutter_speed text,
+  iso integer,
   position integer not null default 0,
   created_at timestamptz not null default now()
 );

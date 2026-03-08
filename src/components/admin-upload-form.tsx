@@ -66,19 +66,63 @@ function getDominantColor(file: File): Promise<string | null> {
   });
 }
 
-async function getExifDate(file: File): Promise<string | null> {
+type ExifData = {
+  date: string | null;
+  cameraMake: string | null;
+  cameraModel: string | null;
+  focalLength: string | null;
+  aperture: string | null;
+  shutterSpeed: string | null;
+  iso: number | null;
+};
+
+async function getExifData(file: File): Promise<ExifData> {
   try {
     const exifr = (await import('exifr')).default;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data = await (exifr as any).parse(file, { DateTimeOriginal: true, DateTimeDigitized: true, DateTime: true });
-    const raw = data?.DateTimeOriginal ?? data?.DateTimeDigitized ?? data?.DateTime;
-    if (!raw) return null;
-    const d = raw instanceof Date ? raw : new Date(raw);
-    if (isNaN(d.getTime())) return null;
-    return d.toISOString().split('T')[0];
+    const data = await (exifr as any).parse(file, {
+      DateTimeOriginal: true, DateTimeDigitized: true, DateTime: true,
+      Make: true, Model: true,
+      FocalLength: true, FNumber: true, ExposureTime: true, ISO: true,
+    });
+    if (!data) return { date: null, cameraMake: null, cameraModel: null, focalLength: null, aperture: null, shutterSpeed: null, iso: null };
+
+    const rawDate = data.DateTimeOriginal ?? data.DateTimeDigitized ?? data.DateTime;
+    let date: string | null = null;
+    if (rawDate) {
+      const d = rawDate instanceof Date ? rawDate : new Date(rawDate);
+      if (!isNaN(d.getTime())) date = d.toISOString().split('T')[0];
+    }
+
+    let focalLength: string | null = null;
+    if (data.FocalLength != null) focalLength = `${Math.round(data.FocalLength)}mm`;
+
+    let aperture: string | null = null;
+    if (data.FNumber != null) aperture = `f/${data.FNumber}`;
+
+    let shutterSpeed: string | null = null;
+    if (data.ExposureTime != null) {
+      const et = data.ExposureTime;
+      shutterSpeed = et < 1 ? `1/${Math.round(1 / et)}s` : `${et}s`;
+    }
+
+    return {
+      date,
+      cameraMake: data.Make ?? null,
+      cameraModel: data.Model ?? null,
+      focalLength,
+      aperture,
+      shutterSpeed,
+      iso: data.ISO ?? null,
+    };
   } catch {
-    return null;
+    return { date: null, cameraMake: null, cameraModel: null, focalLength: null, aperture: null, shutterSpeed: null, iso: null };
   }
+}
+
+async function getExifDate(file: File): Promise<string | null> {
+  const data = await getExifData(file);
+  return data.date;
 }
 
 function isLikelyImage(file: File) {
@@ -246,6 +290,9 @@ const initResponse = await fetch("/api/admin/upload?step=init", {
             // Measure dimensions and dominant color from the processed file
             const dims = await getImageDimensions(file);
             const dominantColor = await getDominantColor(file);
+            const exif = await getExifData(originalFiles[i] ?? file);
+            // If first file and date not set, auto-fill
+            if (i === 0 && exif.date && !takenAtValue) setTakenAtValue(exif.date);
 
             // Register asset
             const registerFormData = new FormData();
@@ -256,6 +303,12 @@ const initResponse = await fetch("/api/admin/upload?step=init", {
             if (dims.width > 0) registerFormData.append("width", dims.width.toString());
             if (dims.height > 0) registerFormData.append("height", dims.height.toString());
             if (dominantColor) registerFormData.append("dominantColor", dominantColor);
+            if (exif.cameraMake) registerFormData.append("cameraMake", exif.cameraMake);
+            if (exif.cameraModel) registerFormData.append("cameraModel", exif.cameraModel);
+            if (exif.focalLength) registerFormData.append("focalLength", exif.focalLength);
+            if (exif.aperture) registerFormData.append("aperture", exif.aperture);
+            if (exif.shutterSpeed) registerFormData.append("shutterSpeed", exif.shutterSpeed);
+            if (exif.iso != null) registerFormData.append("iso", exif.iso.toString());
 
             const registerResponse = await fetch("/api/admin/upload?step=register-asset", {
               method: "POST",

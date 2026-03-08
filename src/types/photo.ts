@@ -5,6 +5,12 @@ export type PostAsset = {
   width: number | null;
   height: number | null;
   dominant_color: string | null;
+  camera_make: string | null;
+  camera_model: string | null;
+  focal_length: string | null;
+  aperture: string | null;
+  shutter_speed: string | null;
+  iso: number | null;
   position: number;
   created_at: string;
   imageUrl: string;

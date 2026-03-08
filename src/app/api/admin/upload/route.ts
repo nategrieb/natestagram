@@ -239,10 +239,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const sortOrder =
-      typeof sortOrderRaw === "string" && sortOrderRaw.trim().length > 0
-        ? Number(sortOrderRaw)
-        : null;
+    const sortOrder = null; // legacy path no longer supports custom order
 
     const { data: postData, error: postInsertError } = await supabase
       .from("posts")

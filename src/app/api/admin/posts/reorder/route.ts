@@ -48,11 +48,15 @@ export async function POST(request: Request) {
 
     const supabase = createSupabaseAdminClient();
 
-    for (let index = 0; index < postIds.length; index += 1) {
+    // assign descending values so when we query with `order("sort_order", { ascending: false })`
+    // the first item in the array remains first.
+    const total = postIds.length;
+    for (let index = 0; index < total; index += 1) {
       const postId = postIds[index];
+      const value = total - index; // higher numbers at front
       const { error } = await supabase
         .from("posts")
-        .update({ sort_order: index })
+        .update({ sort_order: value })
         .eq("id", postId);
 
       if (error) {

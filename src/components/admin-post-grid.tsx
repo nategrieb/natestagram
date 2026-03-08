@@ -62,25 +62,34 @@ export function AdminPostGrid({ posts }: AdminPostGridProps) {
     setSelectedIds(orderedPosts.map((post) => post.id));
   };
 
-  const movePost = (postId: string, direction: -1 | 1) => {
+  // drag-and-drop helpers
+  const movePost = (fromIndex: number, toIndex: number) => {
     setOrderedIds((current) => {
-      const index = current.indexOf(postId);
-      if (index === -1) {
-        return current;
-      }
-
-      const targetIndex = index + direction;
-      if (targetIndex < 0 || targetIndex >= current.length) {
-        return current;
-      }
-
       const next = [...current];
-      const [item] = next.splice(index, 1);
-      next.splice(targetIndex, 0, item);
+      const [item] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, item);
       return next;
     });
     setNotice(null);
     setError(null);
+  };
+
+  const handleDragStart = (event: React.DragEvent, index: number) => {
+    event.dataTransfer.setData("text/plain", index.toString());
+    event.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (event: React.DragEvent, index: number) => {
+    event.preventDefault();
+    const from = Number(event.dataTransfer.getData("text/plain"));
+    if (!Number.isNaN(from) && from !== index) {
+      movePost(from, index);
+    }
   };
 
   const handleSaveOrder = async () => {
@@ -243,7 +252,11 @@ export function AdminPostGrid({ posts }: AdminPostGridProps) {
           return (
             <div
               key={post.id}
-              className={`group relative overflow-hidden border text-left transition ${
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, index)}
+              className={`group relative overflow-hidden border text-left transition cursor-grab hover:cursor-grabbing ${
                 isSelected ? "border-emerald-500 ring-2 ring-emerald-300" : "border-zinc-200 hover:border-zinc-400"
               }`}
             >
@@ -269,26 +282,7 @@ export function AdminPostGrid({ posts }: AdminPostGridProps) {
                 #{index + 1}
               </div>
 
-              <div className="absolute right-2 top-2 z-20 flex gap-1">
-                <button
-                  type="button"
-                  onClick={() => movePost(post.id, -1)}
-                  disabled={isFirst}
-                  className="border border-white/75 bg-black/55 px-1.5 py-0.5 text-[10px] text-white disabled:opacity-40"
-                  aria-label="Move post earlier"
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  onClick={() => movePost(post.id, 1)}
-                  disabled={isLast}
-                  className="border border-white/75 bg-black/55 px-1.5 py-0.5 text-[10px] text-white disabled:opacity-40"
-                  aria-label="Move post later"
-                >
-                  ↓
-                </button>
-              </div>
+
 
               <div className="absolute bottom-0 left-0 right-0 z-20 bg-black/45 px-2 py-1 text-[11px] text-white">
                 {post.assets.length} photo{post.assets.length === 1 ? "" : "s"}

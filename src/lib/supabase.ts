@@ -1,16 +1,17 @@
 import { createBrowserClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 
-import { getRequiredEnv } from "@/lib/env";
+import { getRequiredEnv, getSupabasePublicKey } from "@/lib/env";
 
 export function createSupabaseServerClient() {
   const url = getRequiredEnv("NEXT_PUBLIC_SUPABASE_URL");
-  const anonKey = getRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  const anonKey = getSupabasePublicKey();
 
   return createClient(url, anonKey, {
     auth: {
       persistSession: false,
     },
+    db: { schema: 'natestagram' },
   });
 }
 
@@ -21,7 +22,7 @@ export function createSupabaseBrowserClient() {
   // is accidentally undefined. read the vars directly and throw a clearer
   // message if we still don't have a URL.
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!url) {
     // This error will surface in the browser console, which makes debugging
@@ -30,10 +31,12 @@ export function createSupabaseBrowserClient() {
   }
 
   if (!anonKey) {
-    throw new Error("Missing required environment variable: NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    throw new Error(
+      "Missing Supabase public key: set NEXT_PUBLIC_SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+    );
   }
 
-  return createBrowserClient(url, anonKey);
+  return createBrowserClient(url, anonKey, { db: { schema: 'natestagram' } });
 }
 
 export function createSupabaseAdminClient() {

@@ -48,5 +48,6 @@ export function createSupabaseAdminClient() {
       persistSession: false,
       autoRefreshToken: false,
     },
+    db: { schema: 'natestagram' },
   });
 }

@@ -116,7 +116,7 @@ export function PhotoCarousel({ assets, caption, className = "h-[60vh]", childre
     <div className={`relative w-full overflow-hidden bg-zinc-950 ${className}`}>
       <div
         ref={trackRef}
-        className="carousel-track flex h-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden touch-pan-x"
+        className="carousel-track flex h-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden [touch-action:pan-x_pinch-zoom]"
         role="region"
         aria-roledescription="carousel"
         aria-label="Photos in this post"
@@ -139,8 +139,7 @@ export function PhotoCarousel({ assets, caption, className = "h-[60vh]", childre
               loading={index === 0 ? undefined : Math.abs(index - activeIndex) <= 2 ? "eager" : "lazy"}
               sizes="(max-width: 768px) 100vw, 67vw"
               onLoad={() => markLoaded(asset.id)}
-              className="pointer-events-none select-none object-contain"
-              draggable={false}
+              className="object-contain"
             />
           </div>
         ))}

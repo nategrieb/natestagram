@@ -31,17 +31,6 @@ cp .env.example .env.local
 
 3. Fill `.env.local`:
 
-```env
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=...
-SUPABASE_STORAGE_BUCKET=photos
-# you can use either variable name; ADMIN_SECRET_CODE is preferred
-ADMIN_SECRET_CODE=choose-a-strong-secret
-# legacy name still supported:
-# ADMIN_UPLOAD_PASSWORD=choose-a-strong-secret
-```
-
 4. In Supabase SQL editor, run `supabase/schema.sql`.
 
 5. Create a public storage bucket named `photos` (or set `SUPABASE_STORAGE_BUCKET` to your bucket name).

@@ -1,11 +1,10 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { checkAdminPassword, clientKeyFromHeaders } from "@/lib/admin-auth";
+import { requireAdminForApi } from "@/lib/admin-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase";
 
 type DeletePayload = {
-  password?: string;
   postIds?: string[];
 };
 
@@ -13,37 +12,13 @@ function jsonError(message: string, status = 400) {
   return NextResponse.json({ ok: false, message }, { status });
 }
 
-function validatePassword(password: string | undefined, request: Request) {
-  const result = checkAdminPassword(password, clientKeyFromHeaders(request.headers));
-
-  if (result === "missing-config") {
-    return {
-      ok: false as const,
-      response: jsonError(
-        "ADMIN_SECRET_CODE (or legacy ADMIN_UPLOAD_PASSWORD) is missing in environment variables.",
-        500
-      ),
-    };
-  }
-
-  if (result === "throttled") {
-    return { ok: false as const, response: jsonError("Too many attempts. Try again later.", 429) };
-  }
-
-  if (result !== "ok") {
-    return { ok: false as const, response: jsonError("Incorrect secret code.", 401) };
-  }
-
-  return { ok: true as const };
-}
-
 export async function POST(request: Request) {
   try {
     const payload = (await request.json().catch(() => null)) as DeletePayload | null;
-    const passwordValidation = validatePassword(payload?.password, request);
+    const admin = await requireAdminForApi();
 
-    if (!passwordValidation.ok) {
-      return passwordValidation.response;
+    if (!admin.ok) {
+      return admin.response;
     }
 
     const postIds = (payload?.postIds ?? []).filter((id): id is string => typeof id === "string" && id.length > 0);

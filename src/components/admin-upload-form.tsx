@@ -229,7 +229,6 @@ export function AdminUploadForm() {
         try {
           // Step 1: Init post
           const initFormData = new FormData();
-          initFormData.append("password", (target.elements.namedItem("password") as HTMLInputElement).value);
           initFormData.append("caption", (target.elements.namedItem("caption") as HTMLTextAreaElement).value);
           initFormData.append("takenAt", (target.elements.namedItem("takenAt") as HTMLInputElement).value);
           initFormData.append("isPublic", (target.elements.namedItem("isPublic") as HTMLInputElement).checked ? "on" : "");
@@ -252,8 +251,6 @@ const initResponse = await fetch("/api/admin/upload?step=init", {
 
             // Prepare asset
             const prepareFormData = new FormData();
-            // include secret code on every request so server can authenticate
-            prepareFormData.append("password", (target.elements.namedItem("password") as HTMLInputElement).value);
             prepareFormData.append("postId", postId);
             prepareFormData.append("position", i.toString());
             prepareFormData.append("fileName", file.name);
@@ -296,7 +293,6 @@ const initResponse = await fetch("/api/admin/upload?step=init", {
 
             // Register asset
             const registerFormData = new FormData();
-            registerFormData.append("password", (target.elements.namedItem("password") as HTMLInputElement).value);
             registerFormData.append("postId", postId);
             registerFormData.append("position", i.toString());
             registerFormData.append("storagePath", path);
@@ -323,7 +319,6 @@ const initResponse = await fetch("/api/admin/upload?step=init", {
 
           // Step 5: Complete
           const completeFormData = new FormData();
-          completeFormData.append("password", (target.elements.namedItem("password") as HTMLInputElement).value);
           completeFormData.append("postId", postId);
 
           const completeResponse = await fetch("/api/admin/upload?step=complete", {
@@ -349,19 +344,6 @@ const initResponse = await fetch("/api/admin/upload?step=init", {
       {clientError ? (
         <p className="border border-rose-200 bg-rose-50 px-4 py-3 text-rose-800">{clientError}</p>
       ) : null}
-
-      <div className="space-y-2">
-        <label className="block text-sm text-zinc-700" htmlFor="password">
-          Secret code
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          className="w-full border border-zinc-300 px-4 py-3 outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
-        />
-      </div>
 
       <div className="space-y-2">
         <label className="block text-sm text-zinc-700" htmlFor="photos">

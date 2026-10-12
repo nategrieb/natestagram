@@ -25,7 +25,6 @@ async function readErrorMessage(response: Response) {
 export function AdminPostGrid({ posts }: AdminPostGridProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [orderedIds, setOrderedIds] = useState<string[]>(() => posts.map((post) => post.id));
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -96,11 +95,6 @@ export function AdminPostGrid({ posts }: AdminPostGridProps) {
     setError(null);
     setNotice(null);
 
-    if (!password) {
-      setError("Enter admin password to save order changes.");
-      return;
-    }
-
     if (!hasOrderChanges) {
       setNotice("No order changes to save.");
       return;
@@ -114,7 +108,6 @@ export function AdminPostGrid({ posts }: AdminPostGridProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          password,
           postIds: orderedIds,
         }),
       });
@@ -137,11 +130,6 @@ export function AdminPostGrid({ posts }: AdminPostGridProps) {
     setError(null);
     setNotice(null);
 
-    if (!password) {
-      setError("Enter admin password to delete posts.");
-      return;
-    }
-
     if (selectedIds.length === 0) {
       setError("Select one or more posts to delete.");
       return;
@@ -162,7 +150,6 @@ export function AdminPostGrid({ posts }: AdminPostGridProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          password,
           postIds: selectedIds,
         }),
       });
@@ -204,19 +191,7 @@ export function AdminPostGrid({ posts }: AdminPostGridProps) {
       </div>
 
       <div className="flex flex-col gap-3 border border-zinc-200 p-4 sm:flex-row sm:items-end">
-        <div className="flex-1 space-y-2">
-          <label htmlFor="deletePassword" className="block text-xs font-medium text-zinc-700 uppercase tracking-wide">
-            Secret code
-          </label>
-          <input
-            id="deletePassword"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="w-full border border-zinc-300 px-3 py-2 text-sm outline-none ring-offset-2 focus:ring-2 focus:ring-zinc-300"
-            placeholder="Enter secret code"
-          />
-        </div>
+        <p className="flex-1 text-xs text-zinc-600">Select posts, then delete them. This cannot be undone.</p>
 
         <button
           type="button"

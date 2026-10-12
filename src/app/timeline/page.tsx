@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HomeGallery } from "@/components/home-gallery";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteLogoLink } from "@/components/site-logo-link";
 import { getPublicPosts } from "@/lib/photos";
 
@@ -45,6 +46,7 @@ async function Timeline({
 
         <HomeGallery posts={posts} selectedId={selectedId} />
       </main>
+      <SiteFooter />
     </div>
   );
 }

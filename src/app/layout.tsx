@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 
@@ -7,7 +7,20 @@ const bodyFont = Manrope({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#ffffff",
+};
+
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  appleWebApp: { capable: true, title: "NATESTAGRAM", statusBarStyle: "default" },
   title: "○ NATESTAGRAM",
   description: "A quiet, personal photo gallery without social noise.",
   openGraph: {
@@ -37,19 +50,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${bodyFont.variable} antialiased`}>
         {children}
-        <footer className="px-4 py-3 sm:px-8">
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-start text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500/90 sm:text-xs">
-            <a
-              href="https://nategrieb.com"
-              target="_blank"
-              rel="noreferrer noopener"
-              className="transition-colors duration-150 hover:text-zinc-800 focus-visible:text-zinc-800"
-              aria-label="Visit nategrieb.com"
-            >
-              NATE GRIEB
-            </a>
-          </div>
-        </footer>
       </body>
     </html>
   );

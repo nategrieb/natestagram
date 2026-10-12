@@ -67,6 +67,7 @@ export function HomeGallery({ posts, selectedId }: HomeGalleryProps) {
               caption={post.caption}
               onOpenModal={() => router.push(`/photo/${post.id}`)}
               showCaptionOverlay={true}
+              priority={index < 2}
             />
           </article>
         ))}

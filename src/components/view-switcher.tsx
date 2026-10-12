@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 import { HomeGallery } from "@/components/home-gallery";
 import { PhotoGrid } from "@/components/photo-grid";
@@ -10,8 +10,42 @@ type ViewSwitcherProps = {
   posts: PhotoPost[];
 };
 
+const VIEW_EVENT = 'natestagram:viewchange';
+
+function notifyViewChange() {
+  window.dispatchEvent(new Event(VIEW_EVENT));
+}
+
+function useView(): 'grid' | 'timeline' {
+  const subscribe = useCallback((onChange: () => void) => {
+    window.addEventListener(VIEW_EVENT, onChange);
+    window.addEventListener('popstate', onChange);
+    return () => {
+      window.removeEventListener(VIEW_EVENT, onChange);
+      window.removeEventListener('popstate', onChange);
+    };
+  }, []);
+
+  return useSyncExternalStore(
+    subscribe,
+    () => (new URLSearchParams(window.location.search).get('view') === 'timeline' ? 'timeline' : 'grid'),
+    () => 'grid'
+  );
+}
+
 export function ViewSwitcher({ posts }: ViewSwitcherProps) {
-  const [view, setView] = useState<'grid' | 'timeline'>('grid');
+  const view = useView();
+  const setView = (next: 'grid' | 'timeline') => {
+    const url = new URL(window.location.href);
+    if (next === 'grid') {
+      url.searchParams.delete('view');
+    } else {
+      url.searchParams.set('view', next);
+    }
+    // replaceState keeps the choice in the URL so Back from a photo returns to the same view.
+    window.history.replaceState(window.history.state, '', url);
+    notifyViewChange();
+  };
 
   return (
     <>

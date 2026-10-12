@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
+import { checkAdminPassword, clientKeyFromHeaders } from "@/lib/admin-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase";
 
 const MAX_SINGLE_FILE_BYTES = 18 * 1024 * 1024;
@@ -43,12 +44,10 @@ function jsonError(message: string, status = 400) {
   return NextResponse.json({ ok: false, message }, { status });
 }
 
-function validatePassword(formData: FormData) {
-  const password = formData.get("password");
-  // prefer new variable name but fall back for compatibility
-  const expectedPassword = process.env.ADMIN_SECRET_CODE ?? process.env.ADMIN_UPLOAD_PASSWORD;
+function validatePassword(formData: FormData, request: Request) {
+  const result = checkAdminPassword(formData.get("password"), clientKeyFromHeaders(request.headers));
 
-  if (!expectedPassword) {
+  if (result === "missing-config") {
     return {
       ok: false as const,
       response: jsonError(
@@ -58,7 +57,11 @@ function validatePassword(formData: FormData) {
     };
   }
 
-  if (typeof password !== "string" || password !== expectedPassword) {
+  if (result === "throttled") {
+    return { ok: false as const, response: jsonError("Too many attempts. Try again later.", 429) };
+  }
+
+  if (result !== "ok") {
     return { ok: false as const, response: jsonError("Incorrect secret code.", 401) };
   }
 
@@ -75,7 +78,7 @@ export async function POST(request: Request) {
     const step = new URL(request.url).searchParams.get("step") ?? "legacy";
     const formData = await request.formData();
 
-    const passwordValidation = validatePassword(formData);
+    const passwordValidation = validatePassword(formData, request);
     if (!passwordValidation.ok) {
       return passwordValidation.response;
     }

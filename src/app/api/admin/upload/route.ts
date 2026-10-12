@@ -1,11 +1,10 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { checkAdminPassword, clientKeyFromHeaders } from "@/lib/admin-auth";
+import { requireAdminForApi } from "@/lib/admin-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase";
 
 const MAX_SINGLE_FILE_BYTES = 18 * 1024 * 1024;
-const MAX_TOTAL_UPLOAD_BYTES = 24 * 1024 * 1024;
 
 const IMAGE_EXTENSIONS = new Set([
   "jpg",
@@ -24,14 +23,6 @@ function getFileExtension(name: string) {
   return name.split(".").pop()?.toLowerCase() ?? "";
 }
 
-function isLikelyImage(file: File) {
-  if (file.type.startsWith("image/")) {
-    return true;
-  }
-
-  return IMAGE_EXTENSIONS.has(getFileExtension(file.name));
-}
-
 function isLikelyImageFromNameType(fileName: string, fileType: string) {
   if (fileType.startsWith("image/")) {
     return true;
@@ -44,44 +35,16 @@ function jsonError(message: string, status = 400) {
   return NextResponse.json({ ok: false, message }, { status });
 }
 
-function validatePassword(formData: FormData, request: Request) {
-  const result = checkAdminPassword(formData.get("password"), clientKeyFromHeaders(request.headers));
-
-  if (result === "missing-config") {
-    return {
-      ok: false as const,
-      response: jsonError(
-        "ADMIN_SECRET_CODE (or legacy ADMIN_UPLOAD_PASSWORD) is missing in environment variables.",
-        500
-      ),
-    };
-  }
-
-  if (result === "throttled") {
-    return { ok: false as const, response: jsonError("Too many attempts. Try again later.", 429) };
-  }
-
-  if (result !== "ok") {
-    return { ok: false as const, response: jsonError("Incorrect secret code.", 401) };
-  }
-
-  return { ok: true as const };
-}
-
 export async function POST(request: Request) {
-  // debug: ensure environment variables are loaded
-  console.log("DEBUG env NEXT_PUBLIC_SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log("DEBUG env ADMIN_SECRET_CODE", process.env.ADMIN_SECRET_CODE,
-    "legacy", process.env.ADMIN_UPLOAD_PASSWORD);
-
   try {
-    const step = new URL(request.url).searchParams.get("step") ?? "legacy";
+    const admin = await requireAdminForApi();
+    if (!admin.ok) {
+      return admin.response;
+    }
+
+    const step = new URL(request.url).searchParams.get("step");
     const formData = await request.formData();
 
-    const passwordValidation = validatePassword(formData, request);
-    if (!passwordValidation.ok) {
-      return passwordValidation.response;
-    }
 
     const caption = formData.get("caption");
     const takenAt = formData.get("takenAt");
@@ -156,14 +119,6 @@ export async function POST(request: Request) {
       if (signed.error || !signed.data) {
         return jsonError(signed.error?.message || "Failed to prepare upload URL.", 500);
       }
-
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      if (!supabaseUrl) {
-        return jsonError("Supabase URL not configured.", 500);
-      }
-
-      const hostname = new URL(supabaseUrl).hostname;
-      const uploadUrl = `https://${hostname}/storage/v1/object/upload/sign/${signed.data.path}?token=${signed.data.token}`;
 
       return NextResponse.json({
         ok: true,
@@ -243,86 +198,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    // Backward-compatible legacy path (single request containing all files).
-    const fileEntries = formData
-      .getAll("photos")
-      .filter((entry): entry is File => entry instanceof File && entry.size > 0);
-
-    if (fileEntries.length === 0) {
-      return jsonError("Please choose one or more image files.");
-    }
-
-    const totalBytes = fileEntries.reduce((sum, file) => sum + file.size, 0);
-    if (totalBytes > MAX_TOTAL_UPLOAD_BYTES) {
-      return jsonError("Total upload is too large. Please upload fewer or smaller photos.");
-    }
-
-    for (const file of fileEntries) {
-      if (!isLikelyImage(file)) {
-        return jsonError(`Unsupported file type for ${file.name}.`);
-      }
-
-      if (file.size > MAX_SINGLE_FILE_BYTES) {
-        return jsonError(`${file.name} is too large. Keep each photo under 18MB.`);
-      }
-    }
-
-    const sortOrder = null; // legacy path no longer supports custom order
-
-    const { data: postData, error: postInsertError } = await supabase
-      .from("posts")
-      .insert({
-        caption: typeof caption === "string" ? caption.trim() : null,
-        taken_at: typeof takenAt === "string" && takenAt ? takenAt : null,
-        is_public: isPublic,
-        sort_order: Number.isFinite(sortOrder) ? sortOrder : null,
-      })
-      .select("id")
-      .single();
-
-    if (postInsertError || !postData) {
-      return jsonError(postInsertError?.message || "Failed to create post.", 500);
-    }
-
-    const postAssets: Array<{
-      post_id: string;
-      storage_path: string;
-      position: number;
-    }> = [];
-
-    for (let index = 0; index < fileEntries.length; index += 1) {
-      const file = fileEntries[index];
-      const extension = getFileExtension(file.name) || "jpg";
-      const sanitizedName = file.name.toLowerCase().replace(/[^a-z0-9.-]+/g, "-");
-      const storagePath = `${postData.id}/${index}-${Date.now()}-${sanitizedName.replace(/\.+/g, ".")}`;
-      const fileBuffer = await file.arrayBuffer();
-
-      const { error: uploadError } = await supabase.storage.from(bucket).upload(storagePath, fileBuffer, {
-        contentType: file.type || `image/${extension}`,
-        upsert: false,
-      });
-
-      if (uploadError) {
-        return jsonError(uploadError.message, 500);
-      }
-
-      postAssets.push({
-        post_id: postData.id,
-        storage_path: storagePath,
-        position: index,
-      });
-    }
-
-    const { error: insertError } = await supabase.from("post_assets").insert(postAssets);
-
-    if (insertError) {
-      return jsonError(insertError.message, 500);
-    }
-
-    revalidatePath("/");
-    revalidatePath(`/photo/${postData.id}`);
-
-    return NextResponse.json({ ok: true });
+    return jsonError("Unknown upload step.");
   } catch {
     return jsonError("Upload failed unexpectedly. Please try again.", 500);
   }

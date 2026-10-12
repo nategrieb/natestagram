@@ -1,7 +1,11 @@
+import { redirect } from "next/navigation";
+
 import { AdminPostGrid } from "@/components/admin-post-grid";
 import { AdminUploadForm } from "@/components/admin-upload-form";
 import { SiteFooter } from "@/components/site-footer";
+import { SignOutButton } from "@/components/sign-out-button";
 import { SiteLogoLink } from "@/components/site-logo-link";
+import { getAdminSession } from "@/lib/admin-auth";
 import { getAdminPosts } from "@/lib/photos";
 
 type AdminPageProps = {
@@ -11,7 +15,15 @@ type AdminPageProps = {
   }>;
 };
 
+export const metadata = { title: "Manage · NATESTAGRAM", robots: { index: false } };
+
 export default async function AdminPage({ searchParams }: AdminPageProps) {
+  // Checked before any data is fetched so private posts are never rendered for visitors.
+  const session = await getAdminSession();
+  if (session.status !== "admin") {
+    redirect("/login");
+  }
+
   const postsPromise = getAdminPosts();
   const query = await searchParams;
   const errorMessage = query.status === "error" ? query.message || "Upload failed." : null;
@@ -25,7 +37,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         <header className="mb-8 flex items-center justify-between gap-6 sm:mb-10">
           <SiteLogoLink />
 
-          <div className="h-10 w-10" aria-hidden="true" />
+          <SignOutButton />
         </header>
 
         <div aria-hidden="true" className="mb-6 h-px w-full bg-zinc-300/40 sm:mb-8" />

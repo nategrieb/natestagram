@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { checkAdminPassword, clientKeyFromHeaders } from "@/lib/admin-auth";
 import { createSupabaseAdminClient } from "@/lib/supabase";
 
 const MAX_SINGLE_FILE_BYTES = 18 * 1024 * 1024;
@@ -13,16 +15,19 @@ function redirectWithError(message: string): never {
 }
 
 export async function uploadPhoto(formData: FormData) {
-  const password = formData.get("password");
-  const expectedPassword = process.env.ADMIN_SECRET_CODE ?? process.env.ADMIN_UPLOAD_PASSWORD;
+  const authResult = checkAdminPassword(formData.get("password"), clientKeyFromHeaders(await headers()));
 
-  if (!expectedPassword) {
+  if (authResult === "missing-config") {
     redirectWithError(
       "ADMIN_SECRET_CODE (or legacy ADMIN_UPLOAD_PASSWORD) is missing in environment variables."
     );
   }
 
-  if (typeof password !== "string" || password !== expectedPassword) {
+  if (authResult === "throttled") {
+    redirectWithError("Too many attempts. Try again later.");
+  }
+
+  if (authResult !== "ok") {
     redirectWithError("Incorrect secret code.");
   }
 

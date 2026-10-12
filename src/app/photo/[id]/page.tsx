@@ -1,133 +1,144 @@
 import React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { PhotoGrid } from "@/components/photo-grid";
+import { ShareButton } from "@/components/share-button";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteLogoLink } from "@/components/site-logo-link";
-import { getPublicPosts } from "@/lib/photos";
+import { getPublicPostWithNeighbors } from "@/lib/photos";
 import type { PhotoPost } from "@/types/photo";
+
+// Photos change rarely; uploads also call revalidatePath.
+export const revalidate = 60;
+
+// Render photo pages on first request, then serve them from the ISR cache.
+export function generateStaticParams() {
+  return [];
+}
 
 type PhotoPageProps = {
   params: Promise<{ id: string }>;
 };
 
+export async function generateMetadata({ params }: PhotoPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const result = await getPublicPostWithNeighbors(id);
+
+  if (!result) {
+    return {};
+  }
+
+  const { post } = result;
+  const cover = post.assets[0];
+  const description =
+    post.caption?.trim() ||
+    (post.assets.length > 1 ? `${post.assets.length} photos` : "A photo on NATESTAGRAM");
+  const title = "○ NATESTAGRAM";
+  const images = cover
+    ? [{ url: cover.imageUrl, width: cover.width ?? undefined, height: cover.height ?? undefined, alt: description }]
+    : undefined;
+
+  return {
+    description,
+    alternates: { canonical: `/photo/${post.id}` },
+    openGraph: { title, description, siteName: title, type: "article", url: `/photo/${post.id}`, images },
+    twitter: { card: "summary_large_image", title, description, images: cover ? [cover.imageUrl] : undefined },
+  };
+}
+
+const postNavClass =
+  "inline-flex min-h-11 items-center gap-2 px-3 text-sm font-medium text-zinc-700 transition-colors hover:text-zinc-950 active:scale-95";
+
 export default async function PhotoPage({ params }: PhotoPageProps) {
   const { id } = await params;
-  const posts = await getPublicPosts();
-  const currentIndex = posts.findIndex((post) => post.id === id);
+  const result = await getPublicPostWithNeighbors(id);
 
-  if (currentIndex === -1) {
+  if (!result) {
     notFound();
   }
 
-  const currentPost = posts[currentIndex];
-  const previousPost = posts[currentIndex - 1] ?? null;
-  const nextPost = posts[currentIndex + 1] ?? null;
-
-  // Filter out the current post for the grid below
-  const remainingPosts = posts.filter((post) => post.id !== currentPost.id);
+  const { post: currentPost, previousId, nextId, more } = result;
 
   return (
     <main className="relative flex min-h-screen flex-col overflow-x-hidden">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-5 sm:px-8">
+      {/* Desktop header; on phones the viewer fills the screen and has its own overlay bar. */}
+      <div className="mx-auto hidden w-full max-w-7xl items-center justify-between gap-4 px-4 py-5 sm:px-8 md:flex">
         <SiteLogoLink />
-        <div className="hidden gap-2 text-sm md:flex">
-          {previousPost ? (
-            <Link
-              href={`/photo/${previousPost.id}`}
-              className="group relative inline-flex h-10 w-10 items-center justify-center rounded-none border border-transparent text-zinc-600 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-800 focus-visible:border-zinc-300/80 focus-visible:bg-white/70 focus-visible:text-zinc-800 active:scale-95"
-              aria-label="Previous post"
-            >
-              <span aria-hidden="true" className="text-lg leading-none">&larr;</span>
-              <span
-                aria-hidden="true"
-                className="absolute bottom-1.5 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100 group-active:scale-x-100"
-              />
+        <div className="flex items-center gap-1">
+          <ShareButton className="text-zinc-700 hover:text-zinc-950" />
+          {previousId ? (
+            <Link href={`/photo/${previousId}`} className={postNavClass} aria-label="Newer post">
+              <span aria-hidden="true">&larr;</span> Newer
             </Link>
           ) : null}
-          {nextPost ? (
-            <Link
-              href={`/photo/${nextPost.id}`}
-              className="group relative inline-flex h-10 w-10 items-center justify-center rounded-none border border-transparent text-zinc-600 transition-all duration-200 hover:border-zinc-300/80 hover:bg-white/70 hover:text-zinc-800 focus-visible:border-zinc-300/80 focus-visible:bg-white/70 focus-visible:text-zinc-800 active:scale-95"
-              aria-label="Next post"
-            >
-              <span aria-hidden="true" className="text-lg leading-none">&rarr;</span>
-              <span
-                aria-hidden="true"
-                className="absolute bottom-1.5 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-500/70 transition-transform duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100 group-active:scale-x-100"
-              />
+          {nextId ? (
+            <Link href={`/photo/${nextId}`} className={postNavClass} aria-label="Older post">
+              Older <span aria-hidden="true">&rarr;</span>
             </Link>
           ) : null}
         </div>
       </div>
 
-      <section className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-5 px-4 pb-16 sm:px-8 md:grid-cols-[2fr_1fr] md:pb-8">
-        <PhotoCarousel assets={currentPost.assets} caption={currentPost.caption} fullScreen={false} />
+      <section className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-5 md:grid-cols-[2fr_1fr] md:px-8 md:pb-8">
+        <PhotoCarousel
+          assets={currentPost.assets}
+          caption={currentPost.caption}
+          className="h-[100dvh] md:h-[78vh]"
+        >
+          <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between bg-gradient-to-b from-black/50 to-transparent px-2 pb-6 pt-[max(0.5rem,env(safe-area-inset-top))] text-white md:hidden">
+            <Link href="/" aria-label="Back to gallery" className="inline-flex h-11 w-11 items-center justify-center text-2xl active:scale-95">
+              &larr;
+            </Link>
+            <ShareButton className="text-white" />
+          </div>
+        </PhotoCarousel>
 
-        <article className="flex flex-col p-4 sm:p-6 md:justify-center md:p-8">
+        <article className="flex flex-col px-4 pb-4 sm:px-6 md:justify-center md:p-8">
           <div className="space-y-4 md:space-y-6">
-            {/* Caption Section */}
             {currentPost.caption ? (
-              <div className="space-y-3 md:space-y-4">
-                <p className="whitespace-pre-wrap text-sm md:text-base leading-relaxed text-zinc-800">
-                  {currentPost.caption}
-                </p>
-              </div>
-            ) : (
-              <div className="text-center py-6 md:py-8 text-zinc-400">
-                <p className="text-sm">No caption provided</p>
-              </div>
-            )}
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-800 md:text-base">
+                {currentPost.caption}
+              </p>
+            ) : null}
 
-            {/* Photo Details */}
+            <nav aria-label="Other posts" className="flex items-center justify-between border-y border-zinc-200/70 py-1">
+              {previousId ? (
+                <Link href={`/photo/${previousId}`} className={postNavClass}>
+                  <span aria-hidden="true">&larr;</span> Newer post
+                </Link>
+              ) : (
+                <span />
+              )}
+              {nextId ? (
+                <Link href={`/photo/${nextId}`} className={postNavClass}>
+                  Older post <span aria-hidden="true">&rarr;</span>
+                </Link>
+              ) : (
+                <span />
+              )}
+            </nav>
+
             <PhotoMetadata post={currentPost} />
           </div>
         </article>
       </section>
 
-      {/* Continue browsing grid */}
-      {remainingPosts.length > 0 && (
+      {more.length > 0 && (
         <section className="border-t border-zinc-100 bg-white">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
             <h2 className="mb-6 text-lg font-semibold text-zinc-900">Continue browsing</h2>
-            <PhotoGrid posts={remainingPosts} />
+            <PhotoGrid posts={more} />
+            <Link href="/" className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-zinc-700 hover:text-zinc-950">
+              View all photos &rarr;
+            </Link>
           </div>
         </section>
       )}
 
-      {previousPost || nextPost ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200/70 bg-white/90 px-4 py-3 backdrop-blur md:hidden">
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-center gap-5">
-            {previousPost ? (
-              <Link
-                href={`/photo/${previousPost.id}`}
-                className="group relative inline-flex h-12 w-12 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 active:scale-95 active:border-zinc-300/80 active:bg-white active:text-zinc-900"
-                aria-label="Previous post"
-              >
-                <span aria-hidden="true" className="text-2xl leading-none">&larr;</span>
-                <span
-                  aria-hidden="true"
-                  className="absolute bottom-1.5 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
-                />
-              </Link>
-            ) : null}
-            {nextPost ? (
-              <Link
-                href={`/photo/${nextPost.id}`}
-                className="group relative inline-flex h-12 w-12 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 active:scale-95 active:border-zinc-300/80 active:bg-white active:text-zinc-900"
-                aria-label="Next post"
-              >
-                <span aria-hidden="true" className="text-2xl leading-none">&rarr;</span>
-                <span
-                  aria-hidden="true"
-                  className="absolute bottom-1.5 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-600/80 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
-                />
-              </Link>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      <SiteFooter />
     </main>
   );
 }
@@ -153,10 +164,13 @@ function PhotoMetadata({ post }: { post: PhotoPost }) {
   if (!hasAnyInfo) return null;
 
   return (
-    <div className="border-t border-zinc-100 pt-4 md:pt-6 space-y-4">
-      <h3 className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Details</h3>
+    <details className="group">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-[10px] font-semibold uppercase tracking-widest text-zinc-400 [&::-webkit-details-marker]:hidden">
+        Details
+        <span aria-hidden="true" className="text-base transition-transform group-open:rotate-45">+</span>
+      </summary>
 
-      <div className="space-y-3">
+      <div className="space-y-3 pt-2">
         {post.taken_at && (
           <MetaRow
             icon={
@@ -255,6 +269,6 @@ function PhotoMetadata({ post }: { post: PhotoPost }) {
           />
         )}
       </div>
-    </div>
+    </details>
   );
 }

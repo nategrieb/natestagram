@@ -1,8 +1,14 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
+import { PhotoGrid } from "@/components/photo-grid";
 import { ViewSwitcher } from "@/components/view-switcher";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteLogoLink } from "@/components/site-logo-link";
 import { getPublicPosts } from "@/lib/photos";
+
+// Photos change rarely; uploads also call revalidatePath.
+export const revalidate = 60;
 
 export default function Home() {
   const postsPromise = getPublicPosts();
@@ -39,8 +45,11 @@ async function Gallery({
 
         <div aria-hidden="true" className="mb-6 h-px w-full bg-zinc-300/40 sm:mb-8" />
 
-        <ViewSwitcher posts={posts} />
+        <Suspense fallback={<PhotoGrid posts={posts} />}>
+          <ViewSwitcher posts={posts} />
+        </Suspense>
       </main>
+      <SiteFooter />
     </div>
   );
 }

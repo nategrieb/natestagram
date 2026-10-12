@@ -1,236 +1,144 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PostAsset } from "@/types/photo";
 
 type PhotoCarouselProps = {
   assets: PostAsset[];
   caption?: string | null;
-  captions?: (string | null)[];
-  fullScreen?: boolean;
-  vertical?: boolean;
-  initialIndex?: number;
+  /** Tailwind sizing classes for the viewer, e.g. "h-[100dvh] md:h-[75vh]". */
+  className?: string;
+  /** Overlay content (e.g. a top bar) rendered above the slides. */
+  children?: React.ReactNode;
+  /** Keep ?i=<n> in the URL in sync with the visible photo so it can be shared. */
+  syncUrl?: boolean;
 };
 
-// Increase to switch slides earlier while swiping; decrease to require more drag.
-const SWIPE_INDEX_ROUNDING = 0.5;
+const URL_PARAM = "i";
 
-export function PhotoCarousel({ assets, caption, captions, fullScreen = true, vertical = false, initialIndex = 0 }: PhotoCarouselProps) {
-  const [activeIndex, setActiveIndex] = useState(initialIndex);
+function readIndexFromUrl(max: number) {
+  const raw = new URLSearchParams(window.location.search).get(URL_PARAM);
+  const parsed = raw ? Number.parseInt(raw, 10) : NaN;
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(parsed - 1, max));
+}
+
+export function PhotoCarousel({ assets, caption, className = "h-[60vh]", children, syncUrl = true }: PhotoCarouselProps) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [loaded, setLoaded] = useState<Set<string>>(() => new Set());
   const trackRef = useRef<HTMLDivElement | null>(null);
-  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const touchStartYRef = useRef<number | null>(null);
-  const touchStartScrollTopRef = useRef<number>(0);
+  const syncedIndexRef = useRef(0);
+  const lastIndex = assets.length - 1;
 
-  const label = useMemo(() => {
-    if (captions && captions[activeIndex]) {
-      return captions[activeIndex] || "Photo post";
-    }
-    return caption || "Photo post";
-  }, [caption, captions, activeIndex]);
-
-  const getSlideHeight = () => {
-    return fullScreen ? "100vh" : "60vh";
-  };
-
-  const scrollToIndex = (index: number, behavior: ScrollBehavior = "smooth") => {
+  const scrollToIndex = useCallback((index: number, behavior: ScrollBehavior) => {
     const track = trackRef.current;
     if (!track) {
       return;
     }
-
-    if (vertical) {
-      const slideHeight = track.clientHeight;
-      track.scrollTo({
-        top: slideHeight * index,
-        behavior,
-      });
-    } else {
-      const slideWidth = track.clientWidth;
-      track.scrollTo({
-        left: slideWidth * index,
-        behavior,
-      });
-    }
-  };
-
-  const goToSlide = (index: number) => {
-    const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
-    setActiveIndex(safeIndex);
-    scrollToIndex(safeIndex);
-  };
-
-  useEffect(() => {
-    const safeIndex = Math.max(0, Math.min(initialIndex, assets.length - 1));
-
-    // Wait one frame so dimensions are available before initial scroll.
-    const frame = requestAnimationFrame(() => {
-      const track = trackRef.current;
-      if (!track) {
-        return;
-      }
-
-      if (vertical) {
-        const slideHeight = track.clientHeight;
-        if (slideHeight > 0) {
-          track.scrollTo({ top: slideHeight * safeIndex, behavior: "auto" });
-        }
-      } else {
-        const slideWidth = track.clientWidth;
-        if (slideWidth > 0) {
-          track.scrollTo({ left: slideWidth * safeIndex, behavior: "auto" });
-        }
-      }
-    });
-
-    return () => cancelAnimationFrame(frame);
-  }, [initialIndex, assets.length, vertical]);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const track = trackRef.current;
-    if (!track) return;
-
-    // Horizontal mode uses native touch scrolling for smoother swipes.
-    if (!vertical) return;
-
-    touchStartYRef.current = e.touches[0].clientY;
-    touchStartScrollTopRef.current = track.scrollTop;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const track = trackRef.current;
-    if (!track) return;
-
-    if (!vertical) return;
-
-    if (touchStartYRef.current === null) return;
-    e.preventDefault();
-    const touchY = e.touches[0].clientY;
-    const deltaY = touchStartYRef.current - touchY;
-    track.scrollTop = touchStartScrollTopRef.current + deltaY;
-  };
-
-  const handleTouchEnd = () => {
-    if (!vertical) return;
-
-    touchStartYRef.current = null;
-    settleToNearestSlide("smooth");
-  };
-
-  const settleToNearestSlide = (behavior: ScrollBehavior = "auto") => {
-    const track = trackRef.current;
-    if (!track) {
-      return;
-    }
-
-    if (vertical) {
-      const slideHeight = track.clientHeight;
-      if (slideHeight <= 0) {
-        return;
-      }
-
-      const index = Math.round(track.scrollTop / slideHeight);
-      const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
-      const targetTop = safeIndex * slideHeight;
-
-      setActiveIndex(safeIndex);
-
-      if (Math.abs(track.scrollTop - targetTop) > 1) {
-        track.scrollTo({ top: targetTop, behavior });
-      }
-    } else {
-      const slideWidth = track.clientWidth;
-      if (slideWidth <= 0) {
-        return;
-      }
-
-      const index = Math.round(track.scrollLeft / slideWidth);
-      const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
-      const targetLeft = safeIndex * slideWidth;
-
-      setActiveIndex(safeIndex);
-
-      if (Math.abs(track.scrollLeft - targetLeft) > 1) {
-        track.scrollTo({ left: targetLeft, behavior });
-      }
-    }
-  };
-
-  const updateIndexFromScroll = () => {
-    const track = trackRef.current;
-    if (!track) {
-      return;
-    }
-
-    if (vertical) {
-      const slideHeight = track.clientHeight;
-      if (slideHeight <= 0) {
-        return;
-      }
-
-      const index = Math.floor(track.scrollTop / slideHeight + SWIPE_INDEX_ROUNDING);
-      const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
-      setActiveIndex(safeIndex);
-    } else {
-      const slideWidth = track.clientWidth;
-      if (slideWidth <= 0) {
-        return;
-      }
-
-      const index = Math.floor(track.scrollLeft / slideWidth + SWIPE_INDEX_ROUNDING);
-      const safeIndex = Math.max(0, Math.min(index, assets.length - 1));
-      setActiveIndex(safeIndex);
-    }
-
-    if (settleTimerRef.current) {
-      clearTimeout(settleTimerRef.current);
-    }
-
-    // Adds a gentle "gravity" settle after momentum slows down.
-    settleTimerRef.current = setTimeout(() => {
-      settleToNearestSlide("auto");
-    }, 90);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (settleTimerRef.current) {
-        clearTimeout(settleTimerRef.current);
-      }
-    };
+    track.scrollTo({ left: track.clientWidth * index, behavior });
   }, []);
 
+  const goTo = useCallback(
+    (index: number) => {
+      scrollToIndex(Math.max(0, Math.min(index, lastIndex)), "smooth");
+    },
+    [lastIndex, scrollToIndex]
+  );
+
+  // Jump to the photo named in the URL (?i=3) on first mount.
+  useEffect(() => {
+    if (!syncUrl) {
+      return;
+    }
+    const initial = readIndexFromUrl(lastIndex);
+    if (initial > 0) {
+      syncedIndexRef.current = initial;
+      // The resulting scroll event updates activeIndex.
+      scrollToIndex(initial, "instant");
+    }
+  }, [lastIndex, scrollToIndex, syncUrl]);
+
+  // Reflect the visible photo in the URL without adding history entries.
+  const syncUrlToIndex = (index: number) => {
+    if (!syncUrl || syncedIndexRef.current === index) {
+      return;
+    }
+    syncedIndexRef.current = index;
+    const url = new URL(window.location.href);
+    if (index === 0) {
+      url.searchParams.delete(URL_PARAM);
+    } else {
+      url.searchParams.set(URL_PARAM, String(index + 1));
+    }
+    window.history.replaceState(window.history.state, "", url);
+  };
+
+  // Arrow keys on desktop.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName)) {
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        goTo(activeIndex - 1);
+      } else if (event.key === "ArrowRight") {
+        goTo(activeIndex + 1);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeIndex, goTo]);
+
+  // Native scroll-snap does the swiping; we only observe which slide is showing.
+  const handleScroll = () => {
+    const track = trackRef.current;
+    if (!track || track.clientWidth <= 0) {
+      return;
+    }
+    const index = Math.round(track.scrollLeft / track.clientWidth);
+    const safeIndex = Math.max(0, Math.min(index, lastIndex));
+    setActiveIndex(safeIndex);
+    syncUrlToIndex(safeIndex);
+  };
+
+  const markLoaded = (id: string) => {
+    setLoaded((current) => (current.has(id) ? current : new Set(current).add(id)));
+  };
+
+  const arrowClass =
+    "absolute top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center bg-black/40 text-xl text-white transition-opacity hover:bg-black/60 active:scale-95 disabled:opacity-0 md:inline-flex";
+
   return (
-    <div className={`relative overflow-hidden bg-transparent ${fullScreen ? 'h-screen w-screen' : 'w-full'}`}>
+    <div className={`relative w-full overflow-hidden bg-zinc-950 ${className}`}>
       <div
         ref={trackRef}
-        className={`carousel-track flex scroll-smooth ${fullScreen ? 'h-full' : 'h-[60vh]'} ${
-          vertical
-            ? 'flex-col snap-y snap-mandatory overflow-y-auto overflow-x-hidden touch-pan-y'
-            : 'snap-x snap-mandatory overflow-x-auto overflow-y-hidden touch-pan-x'
-        }`}
-        aria-label="Photo carousel"
-        onScroll={updateIndexFromScroll}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onPointerUp={() => settleToNearestSlide("smooth")}
+        className="carousel-track flex h-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden touch-pan-x"
+        role="region"
+        aria-roledescription="carousel"
+        aria-label="Photos in this post"
+        onScroll={handleScroll}
       >
         {assets.map((asset, index) => (
           <div
             key={asset.id}
-            className={`carousel-slide relative ${vertical ? 'h-full' : 'w-full h-full'} shrink-0`}
-            style={{ height: getSlideHeight() }}
-            onFocus={() => setActiveIndex(index)}
+            className="carousel-slide relative h-full w-full shrink-0"
+            style={{ backgroundColor: loaded.has(asset.id) ? undefined : (asset.dominant_color ?? undefined) }}
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`Photo ${index + 1} of ${assets.length}`}
           >
             <Image
               src={asset.imageUrl}
-              alt={label}
+              alt={caption || "Photo post"}
               fill
               priority={index === 0}
-              sizes="(max-width: 1024px) 100vw, 67vw"
+              loading={index === 0 ? undefined : Math.abs(index - activeIndex) <= 2 ? "eager" : "lazy"}
+              sizes="(max-width: 768px) 100vw, 67vw"
+              onLoad={() => markLoaded(asset.id)}
               className="pointer-events-none select-none object-contain"
               draggable={false}
             />
@@ -238,46 +146,44 @@ export function PhotoCarousel({ assets, caption, captions, fullScreen = true, ve
         ))}
       </div>
 
+      {children}
+
       {assets.length > 1 && (
         <>
           <button
             type="button"
-            onClick={() => goToSlide(activeIndex - 1)}
+            onClick={() => goTo(activeIndex - 1)}
             disabled={activeIndex === 0}
-            className={`group absolute z-20 inline-flex h-11 w-11 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 hover:bg-white hover:text-zinc-900 active:scale-95 active:bg-white disabled:cursor-not-allowed disabled:opacity-30 ${
-              vertical ? 'top-4 left-1/2 -translate-x-1/2' : 'left-4 top-1/2 -translate-y-1/2'
-            }`}
+            className={`${arrowClass} left-3`}
             aria-label="Previous photo"
           >
-            <span aria-hidden="true" className="text-xl leading-none">{vertical ? "↑" : "←"}</span>
-            <span
-              aria-hidden="true"
-              className="absolute bottom-1.5 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-600 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
-            />
+            &larr;
           </button>
-
           <button
             type="button"
-            onClick={() => goToSlide(activeIndex + 1)}
-            disabled={activeIndex === assets.length - 1}
-            className={`group absolute z-20 inline-flex h-11 w-11 items-center justify-center rounded-none border border-transparent text-zinc-700 transition-all duration-200 hover:bg-white hover:text-zinc-900 active:scale-95 active:bg-white disabled:cursor-not-allowed disabled:opacity-30 ${
-              vertical ? 'bottom-4 left-1/2 -translate-x-1/2' : 'right-4 top-1/2 -translate-y-1/2'
-            }`}
+            onClick={() => goTo(activeIndex + 1)}
+            disabled={activeIndex === lastIndex}
+            className={`${arrowClass} right-3`}
             aria-label="Next photo"
           >
-            <span aria-hidden="true" className="text-xl leading-none">{vertical ? "↓" : "→"}</span>
-            <span
-              aria-hidden="true"
-              className="absolute bottom-1.5 left-2 right-2 h-px origin-center scale-x-0 bg-zinc-600 transition-transform duration-300 group-hover:scale-x-100 group-active:scale-x-100"
-            />
+            &rarr;
           </button>
-        </>
-      )}
 
-      {vertical && (caption || (captions && captions[activeIndex])) && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 text-white z-10">
-          <p className="text-sm">{caption || captions?.[activeIndex]}</p>
-        </div>
+          <div className="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 rounded-full bg-black/55 px-2.5 py-1 text-xs font-medium tabular-nums text-white">
+            {activeIndex + 1} / {assets.length}
+          </div>
+
+          <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex items-center justify-center gap-1.5">
+            {assets.map((asset, index) => (
+              <span
+                key={asset.id}
+                className={`h-1.5 rounded-full transition-all duration-200 ${
+                  index === activeIndex ? "w-5 bg-white" : "w-1.5 bg-white/50"
+                }`}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

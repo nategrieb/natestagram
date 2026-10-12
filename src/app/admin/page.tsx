@@ -1,5 +1,6 @@
 import { AdminPostGrid } from "@/components/admin-post-grid";
 import { AdminUploadForm } from "@/components/admin-upload-form";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteLogoLink } from "@/components/site-logo-link";
 import { getAdminPosts } from "@/lib/photos";
 
@@ -43,6 +44,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <AdminPostGrid posts={posts} />
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

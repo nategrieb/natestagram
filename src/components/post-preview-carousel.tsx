@@ -11,9 +11,11 @@ type PostPreviewCarouselProps = {
   onOpenModal?: (initialIndex: number) => void;
   showCaptionOverlay?: boolean;
   fixedAspectRatio?: number;
+  /** Eagerly load the first image; only set for the first card or two on a page. */
+  priority?: boolean;
 };
 
-export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionOverlay = false, fixedAspectRatio }: PostPreviewCarouselProps) {
+export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionOverlay = false, fixedAspectRatio, priority = false }: PostPreviewCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const currentAsset = assets[activeIndex] ?? assets[0];
   const firstAsset = assets[0];
@@ -49,7 +51,8 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
                   src={currentAsset.imageUrl}
                   alt={caption || "Photo post"}
                   fill
-                  priority={activeIndex === 0}
+                  priority={priority && activeIndex === 0}
+                  sizes="(max-width: 1280px) 100vw, 1280px"
                   className="object-cover absolute inset-0"
                 />
               ) : null}
@@ -74,7 +77,8 @@ export function PostPreviewCarousel({ assets, caption, onOpenModal, showCaptionO
                   src={currentAsset.imageUrl}
                   alt={caption || "Photo post"}
                   fill
-                  priority={activeIndex === 0}
+                  priority={priority && activeIndex === 0}
+                  sizes="(max-width: 1280px) 100vw, 1280px"
                   className="object-cover absolute inset-0"
                 />
               ) : null}

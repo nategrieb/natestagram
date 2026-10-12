@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
 
 import type { PhotoPost } from "@/types/photo";
 
@@ -11,10 +10,6 @@ type PhotoGridProps = {
 };
 
 export function PhotoGrid({ posts }: PhotoGridProps) {
-  const isTouchDevice = useMemo(() => {
-    if (typeof window === 'undefined') return false;
-    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  }, []);
   const router = useRouter();
 
   const handlePhotoClick = (post: PhotoPost) => {
@@ -36,7 +31,8 @@ export function PhotoGrid({ posts }: PhotoGridProps) {
               src={post.coverImageUrl}
               alt={post.caption || "Photo post"}
               fill
-              sizes="(max-width: 640px) 33vw, (max-width: 1280px) 33vw, 33vw"
+              priority={index < 6}
+              sizes="(max-width: 1280px) 33vw, 430px"
               className="object-cover transition-transform duration-200 ease-out group-active:scale-[1.03]"
             />
             <span

@@ -40,10 +40,27 @@ export type AdminSession =
   | { status: "forbidden"; user: User }
   | { status: "admin"; user: User };
 
+/** The shared permission name for this app in platform.apps. */
+const APP_KEY = "natestagram";
+
 /**
- * Verifies the session with Supabase (getUser, not the unverified cookie) and
- * checks the allowlist. The database is shared with other apps, so being signed
- * in is not enough. Fails closed if ADMIN_EMAILS is empty.
+ * Asks the shared permissions (platform.app_role) what this person may do here:
+ * "owner" and "admin" can manage photos. Returns null if the lookup fails.
+ */
+async function getPlatformRole(supabase: Awaited<ReturnType<typeof createSupabaseAuthClient>>): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.schema("platform").rpc("app_role", { p_app: APP_KEY });
+    return error || typeof data !== "string" ? null : data;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Verifies the session with Supabase (getUser, not the unverified cookie), then allows the
+ * person in if the shared permissions make them an owner/admin of this app. ADMIN_EMAILS is kept
+ * as a temporary safety net while the shared permissions roll out (remove it afterwards).
+ * The database is shared with other apps, so being signed in is not enough.
  */
 export async function getAdminSession(): Promise<AdminSession> {
   const supabase = await createSupabaseAuthClient();
@@ -54,7 +71,12 @@ export async function getAdminSession(): Promise<AdminSession> {
   }
 
   const email = data.user.email?.toLowerCase();
-  const allowed = Boolean(email && data.user.email_confirmed_at && getAdminEmails().includes(email));
+  if (!email || !data.user.email_confirmed_at) {
+    return { status: "forbidden", user: data.user };
+  }
+
+  const role = await getPlatformRole(supabase);
+  const allowed = role === "owner" || role === "admin" || getAdminEmails().includes(email);
 
   return allowed ? { status: "admin", user: data.user } : { status: "forbidden", user: data.user };
 }

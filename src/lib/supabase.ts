@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
+import { authCookieOptions } from '@/lib/auth-cookie';
 import { createClient } from "@supabase/supabase-js";
 
 import { getRequiredEnv, getSupabasePublicKey } from "@/lib/env";
@@ -36,7 +37,7 @@ export function createSupabaseBrowserClient() {
     );
   }
 
-  return createBrowserClient(url, anonKey, { db: { schema: 'natestagram' } });
+  return createBrowserClient(url, anonKey, { cookieOptions: authCookieOptions, db: { schema: 'natestagram' } });
 }
 
 export function createSupabaseAdminClient() {

@@ -19,7 +19,7 @@ export function LoginForm({ signedInAs, initialError = null }: { signedInAs: str
     setError(null);
     const { error: oauthError } = await createSupabaseBrowserClient().auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/admin` },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
 
     if (oauthError) {

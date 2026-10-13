@@ -5,14 +5,26 @@ import { useState } from "react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase";
 
-export function LoginForm({ signedInAs }: { signedInAs: string | null }) {
+export function LoginForm({ signedInAs, initialError = null }: { signedInAs: string | null; initialError?: string | null }) {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function signOut() {
     await createSupabaseBrowserClient().auth.signOut();
     router.refresh();
+  }
+
+  async function signInWithGoogle() {
+    setError(null);
+    const { error: oauthError } = await createSupabaseBrowserClient().auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/admin` },
+    });
+
+    if (oauthError) {
+      setError("Couldn't start Google sign-in. Please try again.");
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -50,6 +62,20 @@ export function LoginForm({ signedInAs }: { signedInAs: string | null }) {
       ) : null}
 
       {error ? <p className="border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</p> : null}
+
+      <button
+        type="button"
+        onClick={signInWithGoogle}
+        className="w-full border border-zinc-300 bg-white px-6 py-3 text-sm font-medium text-zinc-900 transition hover:bg-zinc-50"
+      >
+        Continue with Google
+      </button>
+
+      <div className="flex items-center gap-3 text-xs uppercase tracking-widest text-zinc-400" aria-hidden="true">
+        <span className="h-px flex-1 bg-zinc-200" />
+        or
+        <span className="h-px flex-1 bg-zinc-200" />
+      </div>
 
       <div className="space-y-2">
         <label htmlFor="email" className="block text-sm text-zinc-700">

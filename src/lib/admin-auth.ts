@@ -27,14 +27,6 @@ export async function createSupabaseAuthClient() {
   });
 }
 
-/** Lower-cased emails allowed to administer the gallery (ADMIN_EMAILS, comma separated). */
-export function getAdminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 export type AdminSession =
   | { status: "anonymous" }
   | { status: "forbidden"; user: User }
@@ -58,8 +50,7 @@ async function getPlatformRole(supabase: Awaited<ReturnType<typeof createSupabas
 
 /**
  * Verifies the session with Supabase (getUser, not the unverified cookie), then allows the
- * person in if the shared permissions make them an owner/admin of this app. ADMIN_EMAILS is kept
- * as a temporary safety net while the shared permissions roll out (remove it afterwards).
+ * person in if the shared permissions make them an owner/admin of this app.
  * The database is shared with other apps, so being signed in is not enough.
  */
 export async function getAdminSession(): Promise<AdminSession> {
@@ -76,7 +67,7 @@ export async function getAdminSession(): Promise<AdminSession> {
   }
 
   const role = await getPlatformRole(supabase);
-  const allowed = role === "owner" || role === "admin" || getAdminEmails().includes(email);
+  const allowed = role === "owner" || role === "admin";
 
   return allowed ? { status: "admin", user: data.user } : { status: "forbidden", user: data.user };
 }
